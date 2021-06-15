@@ -18,6 +18,9 @@
     <ClInclude Include="JVector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="jstd_core.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="JVector.cpp">
@@ -26,5 +29,8 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>

@@ -3,18 +3,21 @@
 
 #include "JVector.h"
 
-#ifdef WIN32
+constexpr auto UTF_8 = 65001;
+
+#ifdef _WIN32
 #ifdef _MSC_VER
 #include <Windows.h>
 #endif // _MSC_VER
 #endif // WIN32
 
+using namespace JSTD;
+
 int main()
 {
-#ifdef WIN32
-	SetConsoleOutputCP(65001);
+#ifdef _WIN32
+	SetConsoleOutputCP(UTF_8);
 #endif // WIN32
-
 
 
 
