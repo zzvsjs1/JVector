@@ -12,6 +12,7 @@ constexpr auto UTF_8 = 65001;
 #endif // WIN32
 
 using namespace JSTD;
+using std::vector;
 
 int main()
 {
@@ -20,8 +21,8 @@ int main()
 #endif // WIN32
 
 
-
-
+	vector<int> std_vector = { 10, 5, 12, 6, 4, 2, 0 };
+	JVector<int> j_vector = { 10, 5, 12, 6, 4, 2, 0 };
 
 	return 0;
 }
