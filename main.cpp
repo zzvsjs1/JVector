@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <cinttypes>
 
 #include "JVector.h"
 
@@ -13,6 +14,10 @@ constexpr auto UTF_8 = 65001;
 
 using namespace JSTD;
 using std::vector;
+using std::cin;
+using std::cout;
+using std::endl;
+using std::string;
 
 int main()
 {
@@ -20,9 +25,10 @@ int main()
 	SetConsoleOutputCP(UTF_8);
 #endif // WIN32
 
-
-	vector<int> std_vector = { 10, 5, 12, 6, 4, 2, 0 };
-	JVector<int> j_vector = { 10, 5, 12, 6, 4, 2, 0 };
-
+	vector<int> svector = { 10, 5, 12, 6, 4, 2, 0 };
+	JVector<int> jvector = { 10, 5, 12, 6, 4, 2, 0 };
+	for (const auto e : jvector)
+		cout << e << endl;
+	
 	return 0;
 }

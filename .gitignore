@@ -40,3 +40,10 @@ ipch/
 *.opensdf
 *.sdf
 *.cachefile
+
+*.log
+*.vtuneproj
+*.norun
+*.vtune
+
+VTune Profiler Results/
