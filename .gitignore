@@ -33,6 +33,9 @@
 *.db
 
 # Visual C++ cache files
+.vs/
+x64/
+x86/
 ipch/
 *.aps
 *.ncb
@@ -47,6 +50,3 @@ ipch/
 *.vtune
 
 VTune Profiler Results/
-.vs/
-x64/
-x86/
