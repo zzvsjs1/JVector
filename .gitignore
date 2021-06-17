@@ -47,3 +47,6 @@ ipch/
 *.vtune
 
 VTune Profiler Results/
+.vs/
+x64/
+x86/
