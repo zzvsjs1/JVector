@@ -38,7 +38,7 @@ private:
 	size_type data_capacity;
 
 public:
-	JVector() : JVector(default_capacity) {}
+	JVector() = default;
 
 	explicit JVector(size_type count) : number_of_elements(0), data_capacity(count) 
 	{ 
@@ -75,11 +75,20 @@ public:
 	void assign(std::initializer_list<T> ilist);
 
 
-	JVector &operator=(const JVector &other);
+	JVector &operator=(const JVector &other)
+	{
+		return *this;
+	}
 
-	JVector &operator=(JVector &&other) noexcept;
+	JVector &operator=(JVector &&other) noexcept
+	{
+		return *this;
+	}
 
-	JVector &operator=(std::initializer_list<T> ilist);
+	JVector &operator=(std::initializer_list<T> ilist)
+	{
+		return *this;
+	}
 
 	// Element access
 	_NODISCARD reference at(size_type pos)
@@ -97,27 +106,27 @@ public:
 		return at(pos); 
 	}
 
-	const_reference operator[](size_type pos) const 
+	_NODISCARD const_reference operator[](size_type pos) const
 	{ 
 		return at(pos); 
 	}
 
-	reference front() 
+	_NODISCARD reference front() noexcept
 	{ 
-		return data_array[0]; 
+		return *data_array; 
 	}
 
-	reference front() const 
+	_NODISCARD reference front() const noexcept
 	{ 
-		return data_array[0]; 
+		return *data_array;
 	}
 
-	reference back() 
+	_NODISCARD reference back() noexcept
 	{ 
 		return data_array[number_of_elements - 1]; 
 	}
 
-	const_reference back() const 
+	_NODISCARD const_reference back() const noexcept
 	{ 
 		return data_array[number_of_elements - 1]; 
 	}
@@ -133,68 +142,79 @@ public:
 	}
 
 	// Iterators
-	const_iterator cbegin() const noexcept 
-	{ 
-		return data_array; 
+	_NODISCARD iterator begin() noexcept
+	{
+		return data_array;
 	}
 
-	const_iterator cend() const noexcept 
-	{ 
-		return data_array + number_of_elements; 
+	_NODISCARD const_iterator begin() const noexcept
+	{
+		return const_iterator(data_array);
 	}
 
-	const_iterator begin() const noexcept 
-	{ 
-		return cbegin(); 
+	_NODISCARD iterator end() noexcept
+	{
+		return data_array + number_of_elements;
 	}
 
-	const_iterator end() const noexcept 
-	{ 
-		return cend(); 
+	_NODISCARD const_iterator end() const noexcept
+	{
+		return const_iterator(data_array + number_of_elements);
 	}
 
-	iterator begin() noexcept 
-	{ 
-		return const_cast<iterator>(cbegin()); 
+	_NODISCARD reverse_iterator rbegin() noexcept
+	{
+		return reverse_iterator(end());
 	}
 
-	iterator end() noexcept 
-	{ 
-		return const_cast<iterator>(cend()); 
+	_NODISCARD const_reverse_iterator rbegin() const noexcept
+	{
+		return const_reverse_iterator(end());
 	}
 
-	const_reverse_iterator crbegin() const noexcept 
-	{ 
-		return const_reverse_iterator(cend()); 
+	_NODISCARD reverse_iterator rend() noexcept
+	{
+		reverse_iterator(begin());
 	}
 
-	const_reverse_iterator rbegin() const noexcept 
-	{ 
-		return const_reverse_iterator(end()); 
+	_NODISCARD reverse_iterator rend() const noexcept
+	{
+		const_reverse_iterator(begin());
 	}
 
-	reverse_iterator rbegin() noexcept 
+	_NODISCARD const_iterator cbegin() const noexcept
 	{ 
-		return reverse_iterator(end()); 
+		return begin(); 
 	}
 
-	reverse_iterator rend() noexcept;
+	_NODISCARD const_iterator cend() const noexcept
+	{ 
+		return end(); 
+	}
+
+	_NODISCARD const_reverse_iterator crbegin() const noexcept
+	{ 
+		return rbegin(); 
+	}
+
+	_NODISCARD const_reverse_iterator crend() const noexcept {
+		return rend();
+	}
 
 	// Capacity
 	_NODISCARD bool empty() const noexcept
 	{ 
-		return number_of_elements == 0; 
+		return begin() == end(); 
 	}
 
-	size_type size() const noexcept 
+	_NODISCARD size_type size() const noexcept
 	{ 
-		return number_of_elements; 
+		return static_cast<size_type>(end() - begin());
 	}
 
-	size_type max_size() const noexcept 
+	_NODISCARD size_type max_size() const noexcept
 	{ 
-		
-		return ULLONG_MAX; 
+		return std::numeric_limits<difference_type>::max();
 	}
 
 	void reserve(size_type new_cap);
@@ -204,8 +224,10 @@ public:
 		return data_capacity; 
 	}
 
-	void shrink_to_fit();
+	void shrink_to_fit()
+	{
 
+	}
 
 	// Modifiers
 	void clear() noexcept;
@@ -224,9 +246,19 @@ public:
 	template< class... Args >
 	iterator emplace(const_iterator pos, Args&&... args);
 
-	iterator erase(const_iterator pos);
+	iterator erase(const_iterator pos) noexcept(std::is_nothrow_move_assignable_v<value_type>)
+	{
+		auto end_pos = end();
+		
+		return iterator(end_pos);
+	}
 
-	iterator erase(const_iterator first, const_iterator last);
+	iterator erase(const_iterator first, const_iterator last) noexcept(std::is_nothrow_move_assignable_v<value_type>)
+	{
+
+
+		return;
+	}
 
 	void push_back(const T &value)
 	{
@@ -270,7 +302,10 @@ private:
 		data_array = newArray;
 	}
 
-	void assign_range(iterator first, iterator last);
+	void assign_range(iterator first, iterator last)
+	{
+
+	}
 
 };
 _JSTD_END

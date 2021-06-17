@@ -27,8 +27,15 @@ int main()
 
 	vector<int> svector = { 10, 5, 12, 6, 4, 2, 0 };
 	JVector<int> jvector = { 10, 5, 12, 6, 4, 2, 0 };
-	for (const auto e : jvector)
-		cout << e << endl;
+	JVector<int> a;
+	vector<int> vector2;
+
+	cout << jvector[0] << endl;
+	jvector.erase(jvector.begin());
+	cout << jvector[0] << endl;
+
+	//for (const auto e : jvector)
+	//	cout << e << endl;
 	
 	return 0;
 }
