@@ -4,13 +4,27 @@
 
 #include <memory>
 #include <iterator>
-#include <climits>
 
 #include "jstd_core.h"
 
 _JSTD_BEGIN
 // JVector const iterator
+/*
+template <calss Myvec>
+class JVector_Const_Iterator
+{
+public:
+	using iterator_category = random_access_iterator_tag;
+	using value_type = typename Myvec::value_type;
+	using difference_type = typename Myvec::difference_type;
+	using pointer = typename Myvec::const_pointer;
+	using reference = const value_type&;
 
+
+private:
+
+};
+*/
 
 
 // JVector insert iterator
@@ -28,33 +42,48 @@ public:
 	using const_reference        = const T&;
 	using iterator               = T*;
 	using const_iterator         = const T*;
-	using reverse_iterator       = std::reverse_iterator<iterator>;
-	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+	using reverse_iterator       = _STD reverse_iterator<iterator>;
+	using const_reverse_iterator = _STD reverse_iterator<const_iterator>;
 
 private:
-	value_type *data_array;
 	constexpr static size_type default_capacity = 10;
-	size_type number_of_elements;
 	size_type data_capacity;
+	size_type number_of_elements;
+	value_type *data_array;
 
 public:
 	JVector() = default;
 
-	explicit JVector(size_type count) : number_of_elements(0), data_capacity(count) 
-	{ 
-		data_array = new value_type[count]; 
-	}
+	explicit JVector(size_type count) : data_capacity(count), number_of_elements(0), data_array(new value_type[data_capacity]) {}
 
 	JVector(size_type count, const T &value) : JVector(count) 
 	{ 
-		data_array[count - 1] = value; 
+		// Todo
 	}
 
 	JVector(const JVector &other) 
-	{}
+	{
+		if (data_array)
+		{
+			delete[] data_array;
+			data_array=nullptr;
+		}
+		
+		data_array = new value_type[other.capacity()];
+		std::copy(other.cbegin(), other.cend(), data_array);
+		data_capacity = other.data_capacity;
+		number_of_elements = other.number_of_elements;
+	}
 
 	JVector(JVector &&other) noexcept 
-	{}
+	{
+		data_array = other.data_array;
+		data_capacity = other.data_capacity;
+		number_of_elements = other.number_of_elements;
+		other.data_array = nullptr;
+		other.data_capacity = 0;
+		other.number_of_elements = 0;
+	}
 
 	JVector(std::initializer_list<T> init) : JVector(init.size())
 	{
@@ -67,25 +96,45 @@ public:
 		delete[] data_array; 
 	}
 
-	void assign(size_type count, const T &value);
+	void assign(size_type count, const T &value)
+	{
+
+	}
 
 	template< class InputIt >
-	void assign(InputIt first, InputIt last);
+	void assign(InputIt first, InputIt last)
+	{
 
-	void assign(std::initializer_list<T> ilist);
+	}
 
+	void assign(std::initializer_list<T> ilist)
+	{
 
-	JVector &operator=(const JVector &other)
+	}
+
+	JVector& operator=(const JVector &other)
+	{
+		if (this == _STD addressof(other))
+			return *this;
+
+		auto new_data_array = new value_type[other.capacity()];
+
+		if (data_array)
+			delete[] data_array;
+
+		data_array = new_data_array;
+		std::copy(other.cbegin(), other.cend(), data_array);
+		data_capacity = other.data_capacity;
+		number_of_elements = other.number_of_elements;
+		return *this;
+	}
+
+	JVector& operator=(JVector &&other) noexcept
 	{
 		return *this;
 	}
 
-	JVector &operator=(JVector &&other) noexcept
-	{
-		return *this;
-	}
-
-	JVector &operator=(std::initializer_list<T> ilist)
+	JVector& operator=(std::initializer_list<T> ilist)
 	{
 		return *this;
 	}
@@ -217,7 +266,10 @@ public:
 		return std::numeric_limits<difference_type>::max();
 	}
 
-	void reserve(size_type new_cap);
+	void reserve(size_type new_cap)
+	{
+
+	}
 
 	size_type capacity() const noexcept 
 	{ 
@@ -230,7 +282,10 @@ public:
 	}
 
 	// Modifiers
-	void clear() noexcept;
+	void clear() noexcept
+	{
+
+	}
 
 	iterator insert(const_iterator pos, const T &value);
 
@@ -257,16 +312,12 @@ public:
 	{
 
 
-		return;
+		
 	}
 
 	void push_back(const T &value)
 	{
-		if (number_of_elements == data_capacity)
-			change_data_size(data_capacity << 1);
 
-		data_array[number_of_elements] = value;
-		++number_of_elements;
 	}
 
 	void push_back(T &&value);

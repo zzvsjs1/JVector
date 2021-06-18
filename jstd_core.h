@@ -5,5 +5,8 @@
 // NAMESPACE
 #define _JSTD_BEGIN namespace JSTD {
 #define _JSTD_END   }
+#define _STD       ::std::
+#define _CHRONO    ::std::chrono::
+#define _RANGES    ::std::ranges::
 
 #endif // !_JSTD_CORE__
