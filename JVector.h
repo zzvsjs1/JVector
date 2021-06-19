@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <iterator>
+#include <algorithm>
 
 #include "jstd_core.h"
 
@@ -46,7 +47,6 @@ public:
 	using const_reverse_iterator = _STD reverse_iterator<const_iterator>;
 
 private:
-	constexpr static size_type default_capacity = 10;
 	size_type data_capacity;
 	size_type number_of_elements;
 	value_type *data_array;
@@ -54,41 +54,38 @@ private:
 public:
 	JVector() = default;
 
-	explicit JVector(size_type count) : data_capacity(count), number_of_elements(0), data_array(new value_type[data_capacity]) {}
+	explicit JVector(size_type count) : data_capacity(count), 
+		number_of_elements(0), 
+		data_array(new value_type[data_capacity]) {}
 
-	JVector(size_type count, const T &value) : JVector(count) 
-	{ 
-		// Todo
+	JVector(size_type count, const T &value) : data_capacity(count << 1),
+		number_of_elements(count),
+		data_array(new value_type[data_capacity])
+	{
+		_STD fill_n(data_array, count, value);
 	}
 
-	JVector(const JVector &other) 
-	{
-		if (data_array)
-		{
-			delete[] data_array;
-			data_array=nullptr;
-		}
-		
-		data_array = new value_type[other.capacity()];
-		std::copy(other.cbegin(), other.cend(), data_array);
-		data_capacity = other.data_capacity;
-		number_of_elements = other.number_of_elements;
+	JVector(const JVector &other) : data_capacity(other.data_capacity), 
+		number_of_elements(other.number_of_elements),
+		data_array(new value_type[data_capacity])
+	{	
+		_STD copy(other.cbegin(), other.cend(), data_array);
 	}
 
-	JVector(JVector &&other) noexcept 
+	JVector(JVector &&other) noexcept : data_capacity(other.data_capacity),
+		number_of_elements(other.number_of_elements), 
+		data_array(other.data_array) 
 	{
-		data_array = other.data_array;
-		data_capacity = other.data_capacity;
-		number_of_elements = other.number_of_elements;
 		other.data_array = nullptr;
 		other.data_capacity = 0;
 		other.number_of_elements = 0;
 	}
 
-	JVector(std::initializer_list<T> init) : JVector(init.size())
+	JVector(std::initializer_list<T> init) : data_capacity(init.size() << 1),
+		number_of_elements(init.size()),
+		data_array(new value_type[data_capacity])
 	{
-		for (auto &element : init)
-			push_back(element);
+		_STD copy(init.begin(), init.end(), data_array);
 	}
 
 	~JVector() noexcept 
@@ -96,21 +93,12 @@ public:
 		delete[] data_array; 
 	}
 
-	void assign(size_type count, const T &value)
-	{
-
-	}
+	void assign(size_type count, const T &value);
 
 	template< class InputIt >
-	void assign(InputIt first, InputIt last)
-	{
+	void assign(InputIt first, InputIt last);
 
-	}
-
-	void assign(std::initializer_list<T> ilist)
-	{
-
-	}
+	void assign(std::initializer_list<T> ilist);
 
 	JVector& operator=(const JVector &other)
 	{
@@ -129,13 +117,21 @@ public:
 		return *this;
 	}
 
+	// Incomplete!
 	JVector& operator=(JVector &&other) noexcept
 	{
+		if (this == _STD addressof(other))
+			return *this;
+
+		// Move and assign
 		return *this;
 	}
 
+	// Incomplete!
 	JVector& operator=(std::initializer_list<T> ilist)
 	{
+		// Resize and copy
+
 		return *this;
 	}
 
@@ -223,12 +219,12 @@ public:
 
 	_NODISCARD reverse_iterator rend() noexcept
 	{
-		reverse_iterator(begin());
+		return reverse_iterator(begin());
 	}
 
 	_NODISCARD reverse_iterator rend() const noexcept
 	{
-		const_reverse_iterator(begin());
+		return const_reverse_iterator(begin());
 	}
 
 	_NODISCARD const_iterator cbegin() const noexcept
@@ -246,7 +242,8 @@ public:
 		return rbegin(); 
 	}
 
-	_NODISCARD const_reverse_iterator crend() const noexcept {
+	_NODISCARD const_reverse_iterator crend() const noexcept 
+	{
 		return rend();
 	}
 
@@ -266,26 +263,17 @@ public:
 		return std::numeric_limits<difference_type>::max();
 	}
 
-	void reserve(size_type new_cap)
-	{
+	void reserve(size_type new_cap);
 
-	}
-
-	size_type capacity() const noexcept 
+	_NODISCARD size_type capacity() const noexcept
 	{ 
 		return data_capacity; 
 	}
 
-	void shrink_to_fit()
-	{
-
-	}
+	void shrink_to_fit();
 
 	// Modifiers
-	void clear() noexcept
-	{
-
-	}
+	void clear() noexcept;
 
 	iterator insert(const_iterator pos, const T &value);
 
@@ -301,24 +289,11 @@ public:
 	template< class... Args >
 	iterator emplace(const_iterator pos, Args&&... args);
 
-	iterator erase(const_iterator pos) noexcept(std::is_nothrow_move_assignable_v<value_type>)
-	{
-		auto end_pos = end();
-		
-		return iterator(end_pos);
-	}
+	iterator erase(const_iterator pos) noexcept(std::is_nothrow_move_assignable_v<value_type>);
 
-	iterator erase(const_iterator first, const_iterator last) noexcept(std::is_nothrow_move_assignable_v<value_type>)
-	{
+	iterator erase(const_iterator first, const_iterator last) noexcept(std::is_nothrow_move_assignable_v<value_type>);
 
-
-		
-	}
-
-	void push_back(const T &value)
-	{
-
-	}
+	void push_back(const T &value);
 
 	void push_back(T &&value);
 
@@ -331,7 +306,16 @@ public:
 
 	void resize(size_type count, const value_type &value);
 
-	void swap(JVector &other) noexcept;
+	void swap(JVector &other) noexcept
+	{
+		if (this != _STD addressof(other))
+		{
+			using _STD swap;
+			swap(this->data_array, other.data_array);
+			swap(this->number_of_elements, other.number_of_elements);
+			swap(this->data_capacity, other.data_capacity);
+		}
+	}
 
 	// operator
 	/*
@@ -353,10 +337,7 @@ private:
 		data_array = newArray;
 	}
 
-	void assign_range(iterator first, iterator last)
-	{
-
-	}
+	void assign_range(iterator first, iterator last);
 
 };
 _JSTD_END

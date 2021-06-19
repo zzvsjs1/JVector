@@ -3,8 +3,6 @@
 
 #include "JVector.h"
 
-constexpr auto UTF_8 = 65001;
-
 #ifdef _WIN32
 #ifdef _MSC_VER
 #include <Windows.h>
@@ -21,20 +19,27 @@ using std::string;
 int main()
 {
 #ifdef _WIN32
+	constexpr auto UTF_8 = 65001;
 	SetConsoleOutputCP(UTF_8);
 #endif // WIN32
 
 	vector<int> svector = { 10, 5, 12, 6, 4, 2, 0 };
 	JVector<int> jvector = { 10, 5, 12, 6, 4, 2, 0 };
-	JVector<int> a;
-	vector<int> vector2;
+	JVector<int> a(0, 50);
+	vector<int> vector2(0, 50);
 
-	cout << jvector[0] << endl;
-	jvector.erase(jvector.begin());
-	cout << jvector[0] << endl;
+	cout << a.size() << a.capacity() << endl;
+	cout << vector2.size() << vector2.capacity();
 
-	//for (const auto e : jvector)
-	//	cout << e << endl;
-	
+	for (auto e : a)
+		cout << e << " ";
+
+	cout << endl;
+
+	for (auto a = jvector.crbegin(); a != jvector.rend(); a++)
+		cout << *a << " ";
+
+	cout << endl;
+
 	return 0;
 }
