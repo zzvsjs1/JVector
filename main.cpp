@@ -16,6 +16,23 @@ using std::cout;
 using std::endl;
 using std::string;
 
+enum Gender
+{
+	GMale,
+	GFemale,
+	GUnknown,
+};
+
+class Charactor
+{
+public:
+	std::string m_Name;
+	unsigned int m_Age;
+	Gender m_Gender;
+	float m_Height;		// in cm
+	float m_Weight;		// in kg
+};
+
 int main()
 {
 #ifdef _WIN32
@@ -28,16 +45,7 @@ int main()
 	JVector<int> a(0, 50);
 	vector<int> vector2(0, 50);
 
-	cout << a.size() << a.capacity() << endl;
-	cout << vector2.size() << vector2.capacity();
-
-	for (auto e : a)
-		cout << e << " ";
-
-	cout << endl;
-
-	for (auto a = jvector.crbegin(); a != jvector.rend(); a++)
-		cout << *a << " ";
+	cout << svector.max_size();
 
 	cout << endl;
 
