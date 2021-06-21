@@ -5,21 +5,30 @@
 #include <memory>
 #include <iterator>
 #include <algorithm>
+#include <exception>
 
 #include "jstd_core.h"
 
 _JSTD_BEGIN
 // JVector const iterator
-
 template <class MyVector>
 class JVector_Const_Iterator
 {
 public:
-	using iterator_category = random_access_iterator_tag;
-	using value_type = typename MyVector::value_type;
-	using difference_type = typename MyVector::difference_type;
-	//using pointer = typename MyVector::const_pointer;
-	using reference = const value_type&;
+	using iterator_category = _STD random_access_iterator_tag;
+	using value_type        = typename MyVector::value_type;
+	using difference_type   = typename MyVector::difference_type;
+	using pointer           = typename MyVector::const_pointer;
+	using reference         = const value_type&;
+
+	using ptr = typename MyVector::pointer;
+
+	JVector_Const_Iterator() noexcept : ptr() {}
+
+	reference operator*() const noexcept
+	{
+		return *ptr;
+	}
 
 
 private:
@@ -32,15 +41,13 @@ private:
 
 
 // JVector core
-template<class T>
+template<class T> //class Alloc = _STD allocator_traits<T>>
 class JVector
 {
 public:
 	using value_type             = T;
-	using size_type              = std::size_t;
-	using difference_type        = std::ptrdiff_t;
-	//using pointer = typename _Alty_traits::pointer;
-	//using const_pointer = typename _Alty_traits::const_pointer;
+	using size_type              = _STD size_t;
+	using difference_type        = _STD ptrdiff_t;
 	using reference              = T&;
 	using const_reference        = const T&;
 	using iterator               = T*;
@@ -54,7 +61,11 @@ private:
 	value_type *data_array;
 
 public:
-	JVector() = default;
+
+	using pointer = T*;
+	using const_pointer = const T*;
+
+	JVector() noexcept = default;
 
 	explicit JVector(size_type count);
 
@@ -64,79 +75,30 @@ public:
 
 	JVector(JVector &&other) noexcept;
 
-	JVector(std::initializer_list<T> init)
-	{
-		// todo modify me once emplaceback() is implemented
-	}
+	JVector(_STD initializer_list<T> init);
 
-	~JVector() noexcept 
-	{ 
-		delete[] data_array; 
-	}
+	~JVector() noexcept;
 
 	void assign(size_type count, const T &value);
 
 	template< class InputIt >
 	void assign(InputIt first, InputIt last);
 
-	void assign(std::initializer_list<T> ilist);
+	void assign(_STD initializer_list<T> ilist);
 
-	JVector& operator=(const JVector &other)
-	{
-		if (this == _STD addressof(other))
-			return *this;
-		
-		auto new_data_array = new value_type[other.capacity()];
+	JVector& operator=(const JVector &other);
 
-		if (data_array)
-			delete[] data_array;
+	JVector& operator=(JVector &&other) noexcept;
 
-		data_array = new_data_array;
-		std::copy(other.cbegin(), other.cend(), data_array);
-		data_capacity = other.data_capacity;
-		number_of_elements = other.number_of_elements;
-		return *this;
-	}
+	JVector& operator=(_STD initializer_list<T> ilist);
 
-	// Incomplete!
-	JVector& operator=(JVector &&other) noexcept
-	{
-		if (this == _STD addressof(other))
-			return *this;
+	_NODISCARD reference at(size_type pos);
 
-		// Move and assign
-		return *this;
-	}
+	_NODISCARD const_reference at(size_type pos) const;
 
-	// Incomplete!
-	JVector& operator=(std::initializer_list<T> ilist)
-	{
-		// Resize and copy
-		return *this;
-	}
+	_NODISCARD reference operator[](size_type pos);
 
-	// Element access
-	_NODISCARD reference at(size_type pos)
-	{ 
-		// todo check.
-		return data_array[pos]; 
-	}
-
-	_NODISCARD const_reference at(size_type pos) const 
-	{ 
-		// todo check.
-		return data_array[pos]; 
-	}
-
-	_NODISCARD reference operator[](size_type pos) 
-	{ 
-		return data_array[pos];
-	}
-
-	_NODISCARD const_reference operator[](size_type pos) const
-	{ 
-		return data_array[pos];
-	}
+	_NODISCARD const_reference operator[](size_type pos) const;
 
 	_NODISCARD reference front() noexcept
 	{ 
@@ -230,24 +192,15 @@ public:
 	}
 
 	// Capacity
-	_NODISCARD bool empty() const noexcept
-	{ 
-		return number_of_elements == 0; 
-	}
+	_NODISCARD bool empty() const noexcept;
 
-	_NODISCARD size_type size() const noexcept
-	{ 
-		return number_of_elements;
-	}
+	_NODISCARD size_type size() const noexcept;
 
 	_NODISCARD size_type max_size() const noexcept;
 
 	void reserve(size_type new_cap);
 
-	_NODISCARD size_type capacity() const noexcept
-	{ 
-		return data_capacity; 
-	}
+	_NODISCARD size_type capacity() const noexcept;
 
 	void shrink_to_fit();
 
@@ -263,14 +216,14 @@ public:
 	template< class InputIt >
 	iterator insert(const_iterator pos, InputIt first, InputIt last);
 
-	iterator insert(const_iterator pos, std::initializer_list<T> ilist);
+	iterator insert(const_iterator pos, _STD initializer_list<T> ilist);
 
 	template< class... Args >
 	iterator emplace(const_iterator pos, Args&&... args);
 
-	iterator erase(const_iterator pos) noexcept(std::is_nothrow_move_assignable_v<value_type>);
+	iterator erase(const_iterator pos) noexcept(_STD is_nothrow_move_assignable_v<value_type>);
 
-	iterator erase(const_iterator first, const_iterator last) noexcept(std::is_nothrow_move_assignable_v<value_type>);
+	iterator erase(const_iterator first, const_iterator last) noexcept(_STD is_nothrow_move_assignable_v<value_type>);
 
 	void push_back(const T &value)
 	{
@@ -294,16 +247,7 @@ public:
 
 	void resize(size_type count, const value_type &value);
 
-	void swap(JVector &other) noexcept
-	{
-		if (this != _STD addressof(other))
-		{
-			using _STD swap;
-			swap(data_array, other.data_array);
-			swap(number_of_elements, other.number_of_elements);
-			swap(data_capacity, other.data_capacity);
-		}
-	}
+	void swap(JVector &other) noexcept;
 
 	// operator
 	/*
@@ -316,6 +260,10 @@ public:
 	*/
 
 private:
+	void allocate_new_capacity(const size_type new_capacity);
+	void fill_n_to_array(pointer dest, const size_type count, const T& value);
+	void destroy() noexcept;
+	size_type calculate_growth(const size_type new_size) const;
 
 };
 
@@ -336,17 +284,224 @@ inline JVector<T>::JVector(const JVector &other)
 }
 
 template<class T>
-inline JVector<T>::JVector(JVector &&other) noexcept
+inline JVector<T>::JVector(JVector &&other) noexcept :
+	data_capacity(other.data_capacity), 
+	number_of_elements(other.number_of_elements),
+	data_array(other.data_array)
+{
+	other.data_capacity = 0;
+	other.number_of_elements = 0;
+	other.data_array = nullptr;
+}
+
+template<class T>
+inline JVector<T>::JVector(_STD initializer_list<T> init)
 {
 }
 
 template<class T>
-inline typename JVector<T>::size_type JVector<T>::max_size() const noexcept
+inline JVector<T>::~JVector() noexcept
+{
+	destroy();
+}
+
+template<class T>
+inline void 
+JVector<T>::assign(size_type count, const T & value)
+{
+}
+
+template<class T>
+template<class InputIt>
+inline void 
+JVector<T>::assign(InputIt first, InputIt last)
+{
+
+}
+
+template<class T>
+inline void 
+JVector<T>::assign(_STD initializer_list<T> ilist)
+{
+}
+
+template<class T>
+inline JVector<T>& 
+JVector<T>::operator=(const JVector & other)
+{
+	// TODO: insert return statement here
+}
+
+template<class T>
+inline JVector<T>& 
+JVector<T>::operator=(JVector &&other) noexcept
+{
+	if (this != _STD addressof(other))
+	{
+		destroy();
+
+		data_capacity = other.data_capacity;
+		number_of_elements = other.number_of_elements;
+		data_array = other.data_array;
+
+		other.data_capacity = 0;
+		other.number_of_elements = 0;
+		other.data_array = nullptr;
+	}
+
+	return *this;
+}
+
+template<class T>
+inline JVector<T>& 
+JVector<T>::operator=(_STD initializer_list<T> ilist)
+{
+	// TODO: insert return statement here
+}
+
+template<class T>
+inline typename JVector<T>::reference 
+JVector<T>::at(size_type pos)
+{
+	if (size() <= pos)
+		throw _STD out_of_range("JVector's index out of range.");
+
+	return data_array[pos];
+}
+
+template<class T>
+inline typename JVector<T>::const_reference 
+JVector<T>::at(size_type pos) const
+{
+	if (size() <= pos)
+		throw _STD out_of_range("JVector's index out of range.");
+
+	return data_array[pos];
+}
+
+template<class T>
+inline typename JVector<T>::reference 
+JVector<T>::operator[](size_type pos)
+{
+#ifdef JSTL_DEBUG
+	JSTL_VERIFY(pos < size());
+#endif // JSTL_DEBUG
+
+	return data_array[pos];
+}
+
+template<class T>
+inline typename JVector<T>::const_reference 
+JVector<T>::operator[](size_type pos) const
+{
+	return data_array[pos];
+}
+
+template<class T>
+inline bool 
+JVector<T>::empty() const noexcept
+{
+	return number_of_elements == 0;
+}
+
+template<class T>
+inline typename JVector<T>::size_type
+JVector<T>::size() const noexcept
+{
+	return number_of_elements;
+}
+
+template<class T>
+inline typename JVector<T>::size_type 
+JVector<T>::max_size() const noexcept
 {
 	return (_STD min)(
 		static_cast<size_type>((_STD numeric_limits<difference_type>::max)()), static_cast<size_type>(-1) / sizeof(value_type));
 }
 
+template<class T>
+inline void 
+JVector<T>::reserve(size_type new_cap)
+{
+}
+
+template<class T>
+inline typename JVector<T>::size_type 
+JVector<T>::capacity() const noexcept
+{
+	return data_capacity;
+}
+
+template<class T>
+inline void 
+JVector<T>::shrink_to_fit()
+{
+}
+
+
+
+
+
+
+
+template<class T>
+inline void JVector<T>::swap(JVector & other) noexcept
+{
+	if (this != _STD addressof(other))
+	{
+		using _STD swap;
+		swap(data_array, other.data_array);
+		swap(number_of_elements, other.number_of_elements);
+		swap(data_capacity, other.data_capacity);
+	}
+}
+
+template<class T>
+inline void 
+JVector<T>::allocate_new_capacity(const size_type new_capacity)
+{
+	if (data_array)
+		delete[] data_array;
+
+	data_array = new value_type[new_capacity];
+	data_capacity = new_capacity;
+}
+
+template<class T>
+inline void 
+JVector<T>::destroy() noexcept
+{
+	if (data_array)
+	{
+		data_capacity = 0;
+		number_of_elements = 0;
+		delete[] data_array;
+		data_Array = nullptr;
+	}
+}
+
+template<class T>
+inline typename JVector<T>::size_type 
+JVector<T>::calculate_growth(const size_type new_size) const
+{
+	const size_type old_capacity = capacity();
+	const auto max = max_size();
+
+	// geometric growth would overflow
+	if (old_capacity > max - old_capacity / 2) {
+		return max;
+	}
+
+	// 1.5 times capacity
+	const size_type geometric = old_capacity + old_capacity / 2;
+	
+	// geometric growth would be insufficient
+	if (geometric < new_size) {
+		return new_size;
+	}
+
+	return geometric;
+}
 
 _JSTD_END
 #endif // !_JVECTOR_

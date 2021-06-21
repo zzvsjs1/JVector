@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <list>
 
 #include "JVector.h"
 
@@ -45,9 +46,7 @@ int main()
 	JVector<int> a(0, 50);
 	vector<int> vector2(0, 50);
 
-	cout << svector.max_size();
-
-	cout << endl;
+	a[5];
 
 	return 0;
 }
