@@ -33,6 +33,7 @@
 *.db
 
 # Visual C++ cache files
+_ReSharper.Caches/
 .vs/
 x64/
 x86/
