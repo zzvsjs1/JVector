@@ -254,7 +254,7 @@ private:
 	value_type* allocate_memory(const size_type size);
 	void fill_n_to_array(pointer dest, const size_type count, const T& value);
 	void destroy() noexcept;
-	size_type calculate_growth(const size_type new_size) const;
+	_NODISCARD size_type calculate_growth(const size_type new_size) const;
 	void move_range(iterator from, iterator to, pointer dist) noexcept;
 
 };
@@ -304,7 +304,7 @@ inline JVector<T>::~JVector() noexcept
 
 template<class T>
 inline void 
-JVector<T>::assign(size_type count, const T & value)
+JVector<T>::assign(size_type count, const T &value)
 {
 }
 
@@ -327,7 +327,7 @@ JVector<T>::insert(const_iterator pos, InputIt first, InputIt last)
 template<class T>
 template<class ...Args>
 inline typename JVector<T>::iterator
-JVector<T>::emplace(const_iterator pos, Args && ...args)
+JVector<T>::emplace(const_iterator pos, Args &&...args)
 {
 	
 }
@@ -335,7 +335,7 @@ JVector<T>::emplace(const_iterator pos, Args && ...args)
 template<class T>
 template<class ...Args>
 inline typename JVector<T>::reference
-JVector<T>::emplace_back(Args && ...args)
+JVector<T>::emplace_back(Args &&...args)
 {
 	return reference();
 }
@@ -349,7 +349,7 @@ JVector<T>::assign(_STD initializer_list<T> ilist)
 
 template<class T>
 inline JVector<T>& 
-JVector<T>::operator=(const JVector & other)
+JVector<T>::operator=(const JVector &other)
 {
 	// TODO: insert return statement here
 }
@@ -406,9 +406,9 @@ inline typename JVector<T>::reference
 JVector<T>::operator[](size_type pos)
 {
 #ifdef JSTL_DEBUG
-	JSTL_VERIFY(pos < size());
+	assert(("Index out of bound.", pos < size()));
 #endif // JSTL_DEBUG
-
+	
 	return m_data_array[pos];
 }
 
@@ -438,7 +438,8 @@ inline typename JVector<T>::size_type
 JVector<T>::max_size() const noexcept
 {
 	return (_STD min)(
-		static_cast<size_type>((_STD numeric_limits<difference_type>::max)()), static_cast<size_type>(-1) / sizeof(value_type));
+		static_cast<size_type>((_STD numeric_limits<difference_type>::max)()),
+			static_cast<size_type>(-1) / sizeof(value_type));
 }
 
 template<class T>

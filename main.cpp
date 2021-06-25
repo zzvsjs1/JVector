@@ -41,12 +41,12 @@ int main()
 	SetConsoleOutputCP(UTF_8);
 #endif // WIN32
 
-	vector<int> svector = { 10, 5, 12, 6, 4, 2, 0 };
-	JVector<int> jvector = { 10, 5, 12, 6, 4, 2, 0 };
-	JVector<int> a(0, 50);
-	vector<int> vector2(0, 50);
+	vector svector = { 10, 5, 12, 6, 4, 2, 0 };
+	JVector jvector = { 10, 5, 12, 6, 4, 2, 0 };
+	JVector a(0, 50);
+	vector vector2(0, 50);
 
-	a[5];
-
+	a[4];
+	
 	return 0;
 }

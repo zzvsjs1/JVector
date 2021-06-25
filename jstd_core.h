@@ -16,9 +16,4 @@
 #define _CHRONO    ::std::chrono::
 #define _RANGES    ::std::ranges::
 
-// 
-#define JSTL_VERIFY(cond)                                     \
-	assert(cond)
-
-
 #endif // !_JSTD_CORE__
