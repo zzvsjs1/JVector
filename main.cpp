@@ -17,23 +17,6 @@ using std::cout;
 using std::endl;
 using std::string;
 
-enum Gender
-{
-	GMale,
-	GFemale,
-	GUnknown,
-};
-
-class Charactor
-{
-public:
-	std::string m_Name;
-	unsigned int m_Age;
-	Gender m_Gender;
-	float m_Height;		// in cm
-	float m_Weight;		// in kg
-};
-
 int main()
 {
 #ifdef _WIN32
@@ -45,8 +28,22 @@ int main()
 	JVector jvector = { 10, 5, 12, 6, 4, 2, 0 };
 	JVector a(0, 50);
 	vector vector2(0, 50);
+	
 
-	a[4];
+	for (const auto &jvector1 : jvector)
+	{
+		cout << jvector1 << " ";
+	}
+
+	cout << endl;
+	
+	if (std::equal(svector.cbegin(), svector.cend(), jvector.cbegin()))
+		cout << "Equal!" << endl;
+
+	jvector = jvector;
+
+	for (auto a : svector)
+		cout << a << " ";
 	
 	return 0;
 }
