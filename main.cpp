@@ -25,11 +25,14 @@ int main()
 #endif // WIN32
 
 	vector svector = { 10, 5, 12, 6, 4, 2, 0 };
+	vector svector2 = { 10, 5, 12, 6, 4, 2, 0 };
 	JVector jvector = { 10, 5, 12, 6, 4, 2, 0 };
+	JVector jvector2 = { 10, 5, 12, 6, 4, 2 };
 	JVector a(0, 50);
 	vector vector2(0, 50);
 	
-
+	
+	
 	for (const auto &jvector1 : jvector)
 	{
 		cout << jvector1 << " ";
@@ -37,13 +40,11 @@ int main()
 
 	cout << endl;
 	
-	if (std::equal(svector.cbegin(), svector.cend(), jvector.cbegin()))
-		cout << "Equal!" << endl;
+	//if (svector == svector2)
+	//	cout << "Equal!" << endl;
 
-	jvector = jvector;
-
-	for (auto a : svector)
-		cout << a << " ";
+	if (jvector > jvector2)
+		cout << "Greater!" << endl;
 	
 	return 0;
 }
