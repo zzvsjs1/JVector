@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include <list>
 
 #include "JVector.h"
@@ -30,8 +31,15 @@ int main()
 	JVector jvector2 = { 10, 5, 12, 6, 4, 2 };
 	JVector a(0, 50);
 	vector vector2(0, 50);
-	
-	
+
+	for (const auto &jvector1 : jvector)
+	{
+		cout << jvector1 << " ";
+	}
+
+	cout << endl;
+
+	std::sort(jvector.begin(), jvector.end());
 	
 	for (const auto &jvector1 : jvector)
 	{
@@ -39,12 +47,15 @@ int main()
 	}
 
 	cout << endl;
-	
+
 	//if (svector == svector2)
 	//	cout << "Equal!" << endl;
 
-	if (jvector > jvector2)
-		cout << "Greater!" << endl;
+	//if (jvector > jvector2)
+		//cout << "Greater!" << endl;
+
+	//JVector<string> g;
+	//g.emplace(0, "5");
 	
 	return 0;
 }
