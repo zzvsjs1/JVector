@@ -22,6 +22,8 @@ public:
 	
 	using ptr_t             = typename MyVector::pointer;
 	
+	ptr_t ptr;
+	
 	JVector_Const_Iterator() noexcept = default;
 
 	JVector_Const_Iterator(ptr_t pointer) noexcept : ptr(pointer) {}
@@ -128,9 +130,6 @@ public:
 	{
 		return !(*this < right);
 	}
-	
-private:
-	ptr_t ptr;
 };
 
 // Iterator
@@ -138,7 +137,7 @@ template <class MyVector>
 class JVector_Iterator : public JVector_Const_Iterator<MyVector>
 {
 public:
-	using my_base            = JVector_Const_Iterator<MyVector>;
+	using my_base           = JVector_Const_Iterator<MyVector>;
 
 	using iterator_category = _STD random_access_iterator_tag;
 	using value_type        = typename MyVector::value_type;
@@ -296,80 +295,35 @@ public:
 
 	_NODISCARD reference back() noexcept;
 
-	_NODISCARD const_reference back() const noexcept
-	{ 
-		return m_data_array[m_number_of_elements - 1]; 
-	}
+	_NODISCARD const_reference back() const noexcept;
 
-	_NODISCARD value_type* data() noexcept
-	{ 
-		return m_data_array; 
-	}
+	_NODISCARD value_type* data() noexcept;
 
-	_NODISCARD const value_type* data() const noexcept
-	{ 
-		return m_data_array; 
-	}
+	_NODISCARD const value_type* data() const noexcept;
 	
-	_NODISCARD iterator begin() noexcept
-	{
-		return iterator(m_data_array);
-	}
+	_NODISCARD iterator begin() noexcept;
 
-	_NODISCARD const_iterator begin() const noexcept
-	{
-		return const_iterator{ m_data_array };
-	}
+	_NODISCARD const_iterator begin() const noexcept;
 
-	_NODISCARD iterator end() noexcept
-	{
-		return iterator(m_data_array + m_number_of_elements);
-	}
+	_NODISCARD iterator end() noexcept;
 
-	_NODISCARD const_iterator end() const noexcept
-	{
-		return const_iterator(m_data_array + m_number_of_elements);
-	}
+	_NODISCARD const_iterator end() const noexcept;
 
-	_NODISCARD reverse_iterator rbegin() noexcept
-	{
-		return reverse_iterator(end());
-	}
+	_NODISCARD reverse_iterator rbegin() noexcept;
 
-	_NODISCARD const_reverse_iterator rbegin() const noexcept
-	{
-		return const_reverse_iterator(end());
-	}
+	_NODISCARD const_reverse_iterator rbegin() const noexcept;
 
-	_NODISCARD reverse_iterator rend() noexcept
-	{
-		return reverse_iterator(begin());
-	}
+	_NODISCARD reverse_iterator rend() noexcept;
 
-	_NODISCARD reverse_iterator rend() const noexcept
-	{
-		return const_reverse_iterator(begin());
-	}
+	_NODISCARD reverse_iterator rend() const noexcept;
 
-	_NODISCARD const_iterator cbegin() const noexcept
-	{ 
-		return begin(); 
-	}
+	_NODISCARD const_iterator cbegin() const noexcept;
 
-	_NODISCARD const_iterator cend() const noexcept
-	{ 
-		return end(); 
-	}
+	_NODISCARD const_iterator cend() const noexcept;
 
-	_NODISCARD const_reverse_iterator crbegin() const noexcept
-	{ 
-		return rbegin(); 
-	}
+	_NODISCARD const_reverse_iterator crbegin() const noexcept;
 
-	_NODISCARD const_reverse_iterator crend() const noexcept 
-	{
-		return rend();
-	}
+	_NODISCARD const_reverse_iterator crend() const noexcept;
 
 	// Capacity
 	_NODISCARD bool empty() const noexcept;
@@ -419,6 +373,9 @@ public:
 
 	void swap(JVector &other) noexcept;
 
+protected:
+	void range_check(size_type n) const;
+
 private:
 	void allocate_new_capacity(size_type new_capacity);
 	static value_type* allocate_memory(size_type size);
@@ -431,6 +388,7 @@ private:
 	
 	static void move_range(iterator from, iterator to, pointer dist) noexcept;
 	static value_type* resize_and_move(size_type new_size, iterator from, iterator to);
+	
 
 };
 
@@ -558,7 +516,7 @@ JVector<T, Alloc>::operator=(const JVector &other)
 	if (this != _STD addressof(other))
 	{
 		destroy();
-		copy_range(other.cbegin(), other.cend(), begin());
+		copy_range(other.cbegin(), other.cend(), m_data_array);
 	}
 
 	return *this;
@@ -576,11 +534,14 @@ template <class T, class Alloc>
 inline JVector<T, Alloc>&
 JVector<T, Alloc>::operator=(_STD initializer_list<T> ilist)
 {
-	destroy();
-	m_data_capacity = ilist.size();
-	m_number_of_elements = ilist.size();
-	m_data_array = allocate_memory(ilist.size());
-	copy_range(ilist.begin(), ilist.end(), m_data_array);
+	if (ilist.size() != 0)
+	{
+		destroy();
+		m_data_capacity = ilist.size();
+		m_number_of_elements = ilist.size();
+		m_data_array = allocate_memory(ilist.size());
+		copy_range(ilist.begin(), ilist.end(), m_data_array);
+	}
 	
 	return *this;
 }
@@ -589,9 +550,7 @@ template <class T, class Alloc>
 inline typename JVector<T, Alloc>::reference
 JVector<T, Alloc>::at(size_type pos)
 {
-	if (size() <= pos)
-		throw _STD out_of_range("JVector's index out of range.");
-
+	range_check(pos);
 	return m_data_array[pos];
 }
 
@@ -599,9 +558,7 @@ template <class T, class Alloc>
 inline typename JVector<T, Alloc>::const_reference
 JVector<T, Alloc>::at(size_type pos) const
 {
-	if (size() <= pos)
-		throw _STD out_of_range("JVector's index out of range.");
-
+	range_check(pos);
 	return m_data_array[pos];
 }
 
@@ -640,6 +597,111 @@ JVector<T, Alloc>::back() noexcept
 	return m_data_array[m_number_of_elements - 1];
 }
 
+template<class T, class Alloc>
+inline typename JVector<T, Alloc>::const_reference
+JVector<T, Alloc>::back() const noexcept
+{
+	return m_data_array[m_number_of_elements - 1];
+}
+
+template<class T, class Alloc>
+inline typename JVector<T, Alloc>::value_type*
+JVector<T, Alloc>::data() noexcept
+{
+	return m_data_array;
+}
+
+template <class T, class Alloc>
+const typename JVector<T, Alloc>::value_type* 
+JVector<T, Alloc>::data() const noexcept
+{
+	return m_data_array;
+}
+
+template<class T, class Alloc>
+inline typename JVector<T, Alloc>::iterator
+JVector<T, Alloc>::begin() noexcept
+{
+	return iterator(m_data_array);
+}
+
+template<class T, class Alloc>
+inline typename JVector<T, Alloc>::const_iterator
+JVector<T, Alloc>::begin() const noexcept
+{
+	return const_iterator(m_data_array);
+}
+
+template<class T, class Alloc>
+inline typename JVector<T, Alloc>::iterator
+JVector<T, Alloc>::end() noexcept
+{
+	return iterator(m_data_array + m_number_of_elements);
+}
+
+template<class T, class Alloc>
+inline typename JVector<T, Alloc>::const_iterator
+JVector<T, Alloc>::end() const noexcept
+{
+	return const_iterator(m_data_array + m_number_of_elements);
+}
+
+template<class T, class Alloc>
+inline typename JVector<T, Alloc>::reverse_iterator
+JVector<T, Alloc>::rbegin() noexcept
+{
+	return reverse_iterator(end());
+}
+
+template<class T, class Alloc>
+inline typename JVector<T, Alloc>::const_reverse_iterator
+JVector<T, Alloc>::rbegin() const noexcept
+{
+	return const_reverse_iterator(end());
+}
+
+template<class T, class Alloc>
+inline typename JVector<T, Alloc>::reverse_iterator
+JVector<T, Alloc>::rend() noexcept
+{
+	return reverse_iterator(begin());
+}
+
+template<class T, class Alloc>
+inline typename JVector<T, Alloc>::reverse_iterator
+JVector<T, Alloc>::rend() const noexcept
+{
+	return const_reverse_iterator(begin());
+}
+
+template<class T, class Alloc>
+inline typename JVector<T, Alloc>::const_iterator
+JVector<T, Alloc>::cbegin() const noexcept
+{
+	return begin();
+}
+
+template<class T, class Alloc>
+inline typename JVector<T, Alloc>::const_iterator
+JVector<T, Alloc>::cend() const noexcept
+{
+	return end();
+}
+
+template<class T, class Alloc>
+inline typename JVector<T, Alloc>::const_reverse_iterator
+JVector<T, Alloc>::crbegin() const noexcept
+{
+	return rbegin();
+}
+
+template<class T, class Alloc>
+inline typename JVector<T, Alloc>::const_reverse_iterator
+JVector<T, Alloc>::crend() const noexcept
+{
+	return rend();
+}
+	
 template <class T, class Alloc>
 inline bool 
 JVector<T, Alloc>::empty() const noexcept
@@ -688,34 +750,59 @@ template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::shrink_to_fit()
 {
-	
+	if (m_data_capacity != m_number_of_elements)
+	{
+		auto new_array = allocate_memory(m_number_of_elements);
+		move_range(begin(), end(), new_array);
+		m_data_array = new_array;
+	}
 }
 
 template <class T, class Alloc>
 inline typename JVector<T, Alloc>::iterator
-JVector<T, Alloc>::insert(const_iterator pos, const T& value)
+JVector<T, Alloc>::insert(const_iterator pos, const T &value)
 {
-	
+	return emplace(pos, value);
 }
 
 template <class T, class Alloc>
 typename JVector<T, Alloc>::iterator
-JVector<T, Alloc>::insert(const_iterator pos, T&& value)
+JVector<T, Alloc>::insert(const_iterator pos, T &&value)
 {
+	return emplace(pos, _STD move(value));
 }
 
 template <class T, class Alloc>
 inline typename JVector<T, Alloc>::iterator
-JVector<T, Alloc>::insert(const_iterator pos, size_type count, const T & value)
+JVector<T, Alloc>::insert(const_iterator pos, const size_type count, const T &value)
 {
-	
+	// TODO insert count * value at pos
+
+	if (count == 0)
+		return begin();
+
+	// reallocate
+	if (count > m_data_capacity - m_number_of_elements)
+	{
+		
+	}
+	else if (count == 1 && pos.ptr == m_data_array + m_number_of_elements)
+	{
+		emplace_back(value);
+	}
+	else
+	{
+		
+	}
+
+	return iterator();
 }
 
 template <class T, class Alloc>
 inline typename JVector<T, Alloc>::iterator
 JVector<T, Alloc>::insert(const_iterator pos, ::std::initializer_list<T> ilist)
 {
-	return iterator();
+	return insert(pos, ilist.begin(), ilist.end());
 }
 
 template <class T, class Alloc>
@@ -731,7 +818,12 @@ template <class T, class Alloc>
 inline typename JVector<T, Alloc>::iterator
 JVector<T, Alloc>::erase(const_iterator first, const_iterator last) noexcept(_STD is_nothrow_move_assignable_v<value_type>)
 {
-	
+	if (first != last)
+	{
+		
+	}
+
+	// TODO 
 }
 
 template <class T, class Alloc>
@@ -754,7 +846,21 @@ template<class T, class Alloc>
 inline void
 JVector<T, Alloc>::pop_back() noexcept
 {
+
+	
 	--m_number_of_elements;
+}
+
+template<class T, class Alloc>
+inline void JVector<T, Alloc>::resize(size_type count)
+{
+	
+}
+
+template<class T, class Alloc>
+inline void JVector<T, Alloc>::resize(size_type count, const value_type & value)
+{
+	
 }
 
 template <class T, class Alloc>
@@ -775,6 +881,14 @@ JVector<T, Alloc>::swap(JVector &other) noexcept
 		swap(m_number_of_elements, other.m_number_of_elements);
 		swap(m_data_capacity, other.m_data_capacity);
 	}
+}
+
+template<class T, class Alloc>
+inline void
+JVector<T, Alloc>::range_check(size_type n) const
+{
+	if (n > m_number_of_elements)
+		throw _STD out_of_range("JVector::range_check: size n >= vector.size()");
 }
 
 template <class T, class Alloc>
@@ -809,9 +923,11 @@ inline typename JVector<T, Alloc>::size_type
 JVector<T, Alloc>::calculate_growth(const size_type new_size) const
 {
 	const size_type old_capacity = capacity();
-
+	
 	// geometric growth would overflow
-	if (const auto max = max_size(); old_capacity > max - old_capacity / 2) {
+	const auto max = max_size();
+	
+	if (old_capacity > max - old_capacity / 2) {
 		return max;
 	}
 
@@ -839,23 +955,23 @@ template <class Iter>
 inline void
 JVector<T, Alloc>::copy_range(Iter from, Iter to, pointer dist) noexcept
 {
-	for (size_type i = 0; from != to; ++from, ++i)
-		dist[i] = *from;
+	for (; from != to; ++from, ++dist)
+		*dist = *from;
 }
 
 template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::move_range(iterator from, iterator to, pointer dist) noexcept
 {
-	for (size_type i = 0; from != to; ++from, ++i)
-		dist[i] = _STD move(*from);
+	for (; from != to; ++from, ++dist)
+		*dist = _STD move(*from);
 }
 
 template<class T, class Alloc>
 inline  typename JVector<T, Alloc>::value_type* 
 JVector<T, Alloc>::resize_and_move(size_type new_size, iterator from, iterator to)
 {
-	
+	// TODO 
 	return nullptr;
 }
 
@@ -908,11 +1024,6 @@ swap(const JVector<T, Alloc> &left, const JVector<T, Alloc> &right) noexcept
 {
 	left.swap(right);
 }
-
-
-
-
-
 
 _JSTD_END
 #endif // !_JVECTOR_

@@ -18,6 +18,15 @@ using std::cout;
 using std::endl;
 using std::string;
 
+template <typename T>
+void print_arr(const T &t)
+{
+	for (const auto &e : t)
+		cout << e << " ";
+
+	cout << endl;
+}
+
 int main()
 {
 #ifdef _WIN32
@@ -27,35 +36,18 @@ int main()
 
 	vector svector = { 10, 5, 12, 6, 4, 2, 0 };
 	vector svector2 = { 10, 5, 12, 6, 4, 2, 0 };
+
 	JVector jvector = { 10, 5, 12, 6, 4, 2, 0 };
 	JVector jvector2 = { 10, 5, 12, 6, 4, 2 };
+	
 	JVector a(0, 50);
 	vector vector2(0, 50);
 
-	for (const auto &jvector1 : jvector)
-	{
-		cout << jvector1 << " ";
-	}
-
-	cout << endl;
+	print_arr(jvector);
 
 	std::sort(jvector.begin(), jvector.end());
 	
-	for (const auto &jvector1 : jvector)
-	{
-		cout << jvector1 << " ";
-	}
+	print_arr(jvector);
 
-	cout << endl;
-
-	//if (svector == svector2)
-	//	cout << "Equal!" << endl;
-
-	//if (jvector > jvector2)
-		//cout << "Greater!" << endl;
-
-	//JVector<string> g;
-	//g.emplace(0, "5");
-	
 	return 0;
 }
