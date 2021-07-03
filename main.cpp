@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <list>
+#include <chrono>
 
 #include "JVector.h"
 
@@ -43,13 +44,11 @@ void print_2darr(const Ty &t)
 	cout << endl;
 }
 
-
 class my_class
 {
 public:
 	my_class() = default;
 	my_class(int g) : a(g) {}
-
 
 private:
 	int a;
@@ -59,13 +58,13 @@ template <class T>
 class my_class2
 {
 public:
-	my_class2(T g) : a(g) {}
-
+	my_class2() = default;
+	my_class2(T c, T* d) : a(c), b(d) {}
 
 private:
 	T a;
+	T* b;
 };
-
 
 int main()
 {
@@ -74,17 +73,26 @@ int main()
 	SetConsoleOutputCP(UTF_8);
 #endif // WIN32
 
-	/*
-	vector svector = { 10, 5, 12, 6, 4, 2, 0 };
-	vector svector2 = { 10, 5, 12, 6, 4, 2, 0 };
+	//JVector<string> g;
+	vector<string> gg;
 
-	JVector jvector = { 10, 5, 12, 6, 4, 2, 0 };
-	JVector<string> jvector2 = { "d", "a", "b"};
-	*/
+	auto t1 = std::chrono::high_resolution_clock::now();
+	for (size_t i = 0; i < 10000000; i++)
+	{
+		//g.emplace(g.cend(), "haha");
+		gg.emplace(gg.cend(), "haha");
+	}
+	auto t2 = std::chrono::high_resolution_clock::now();
 	
-	//JVector<my_class2<int>> w(5);
+	std::chrono::duration<double, std::milli> fp_ms = t2 - t1;
+	auto int_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+	std::chrono::duration<long, std::micro> int_usec = int_ms;
 
-	//vector<my_class2<int>> ww(5);
-	
+	std::cout << "This vector took " << fp_ms.count() << " ms, "
+		<< "or " << int_ms.count() << " whole milliseconds "
+		<< "(which is " << int_usec.count() << " whole microseconds)" << std::endl;
+
+	//cout << g.capacity() << " " << gg.capacity();
+
 	return 0;
 }
