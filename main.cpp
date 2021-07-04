@@ -47,12 +47,14 @@ void print_2darr(const Ty &t)
 class my_class
 {
 public:
+	static int i;
+	int a;
 	my_class() = default;
 	my_class(int g) : a(g) {}
-
-private:
-	int a;
+	auto r() { return ++a; }
+	~my_class() { cout << "d me " << i++ << " "; }
 };
+int my_class::i = 0;
 
 template <class T>
 class my_class2
@@ -72,27 +74,36 @@ int main()
 	constexpr auto UTF_8 = 65001;
 	SetConsoleOutputCP(UTF_8);
 #endif // WIN32
-
-	//JVector<string> g;
-	vector<string> gg;
-
-	auto t1 = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < 10000000; i++)
-	{
-		//g.emplace(g.cend(), "haha");
-		gg.emplace(gg.cend(), "haha");
-	}
-	auto t2 = std::chrono::high_resolution_clock::now();
 	
+	JVector<int> g;
+	vector<my_class> gg;
+
+	for (size_t i = 0; i < 100; i++)
+	{
+		g.emplace_back(5);
+		gg.emplace_back(5);
+	}
+	
+	g.clear();
+	gg.clear();
+
+	/*
+	const auto t1 = std::chrono::high_resolution_clock::now();
+	for (size_t i = 0; i < 1000; i++)
+	{
+		g.emplace(g.cend(), 1);
+		//gg.emplace(gg.cend(), "haha");
+	}
+	const auto t2 = std::chrono::high_resolution_clock::now();
+
 	std::chrono::duration<double, std::milli> fp_ms = t2 - t1;
-	auto int_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-	std::chrono::duration<long, std::micro> int_usec = int_ms;
+	const auto int_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+	const std::chrono::duration<long, std::micro> int_usec = int_ms;
 
-	std::cout << "This vector took " << fp_ms.count() << " ms, "
+	cout << "This vector took " << fp_ms.count() << " ms, "
 		<< "or " << int_ms.count() << " whole milliseconds "
-		<< "(which is " << int_usec.count() << " whole microseconds)" << std::endl;
-
-	//cout << g.capacity() << " " << gg.capacity();
+		<< "(which is " << int_usec.count() << " whole microseconds)" << endl;
+	*/
 
 	return 0;
 }
