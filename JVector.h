@@ -480,6 +480,7 @@ JVector<T, Alloc>::JVector(JVector &&other) noexcept :
 	m_number_of_elements(0),
 	m_data_array(nullptr)
 {
+	destroy();
 	swap(other);
 }
 
@@ -587,40 +588,29 @@ template <class... Valty>
 inline decltype(auto)
 JVector<T, Alloc>::emplace_back_with_unused_capacity(Valty&&... value)
 {
-	*(m_data_array + m_number_of_elements) = _STD move(value_type(_STD forward<Valty>(value)...));
+	new (m_data_array + m_number_of_elements) value_type(_STD forward<Valty>(value)...);
 	return *(m_data_array + m_number_of_elements++);
 }
 
 template <class T, class Alloc>
-template <class ... Valty>
+template <class... Valty>
 typename JVector<T, Alloc>::pointer
 JVector<T, Alloc>::emplace_reallocate(const_iterator pos, Valty&&... value)
 {
-	// Warning: std::exception my not be a good solution.
 	if (m_data_capacity == max_size())
 		throw _STD exception("JVector too long");
 
-	// The new capacity is added one to the old capacity and verified by JVector::calculate_growth.
-	const size_type new_capacity = calculate_growth(m_data_capacity + 1);
+	const auto new_capacity = calculate_growth(m_data_capacity + 1);
 	const auto added_pos = static_cast<size_type>(pos.ptr - m_data_array);
 
 	const pointer new_vector = allocate_memory(new_capacity);
+	
+	new (new_vector + added_pos) value_type(_STD forward<Valty>(value)...);
 
-	// TODO: I may have misunderstood the meaning of std::move, 
-	// consider reading the online instructions or the c++ standard sheet.
-	new_vector[added_pos] = _STD move(value_type(_STD forward<Valty>(value)...));
-
-	// Moving the first half to new_vector.
-	// Name lookup note:
-	// Use of identifier "move_range" found via unqualified lookup into dependent bases of class templates is a Microsoft extension.
-	// Using this to fix this issue.
-	// Check LLVM Clang -Wmicrosoft-template code.
 	move_range(m_data_array, pos.ptr, new_vector);
 
-	// Then move the second half.
 	move_range(pos.ptr, m_data_array + m_number_of_elements, new_vector + added_pos + 1);
 
-	// Change array to the new one and delete the old one.
 	change_array(new_vector, new_capacity, m_number_of_elements + 1);
 	
 	// Return the current value's reference to the caller.
@@ -646,7 +636,7 @@ JVector<T, Alloc>::emplace(const_iterator pos, Args&&... args)
 		else
 		{
 			rmove_range(m_data_array + m_number_of_elements, where_ptr - 1, m_data_array + m_number_of_elements + 1);
-			*where_ptr = _STD move(value_type(args...));
+			new (where_ptr) value_type(_STD forward<Args>(args)...);
 			++m_number_of_elements;
 		}
 
@@ -662,13 +652,13 @@ template <class... Args>
 inline typename JVector<T, Alloc>::reference
 JVector<T, Alloc>::emplace_back(Args&&... args)
 {
-	// Check if vector have enought space to store a new object.
+	// Check if vector have enough space to store a new object.
 	if (m_number_of_elements != m_data_capacity)
 	{
 		return emplace_back_with_unused_capacity(_STD forward<Args>(args)...);
 	}
 	
-	// Otherwise, reallocte vector and consturct a new object.
+	// Otherwise, reallocate vector and construct a new object.
 	return *emplace_reallocate(cend(), _STD forward<Args>(args)...);
 }
 
@@ -1034,13 +1024,15 @@ JVector<T, Alloc>::pop_back() noexcept
 }
 
 template<class T, class Alloc>
-inline void JVector<T, Alloc>::resize(size_type count)
+inline void
+JVector<T, Alloc>::resize(size_type count)
 {
 	
 }
 
 template<class T, class Alloc>
-inline void JVector<T, Alloc>::resize(size_type count, const value_type &value)
+inline void
+JVector<T, Alloc>::resize(size_type count, const value_type &value)
 {
 	
 }
@@ -1049,11 +1041,16 @@ template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::clear() noexcept
 {
-	for (iterator start = begin(), last = end(); start != last; ++start)
+	if (_STD is_arithmetic_v<T>)
 	{
-		*start = _STD move(value_type());
+		
 	}
 	
+	for (iterator start = begin(), last = end(); start != last; ++start)
+	{
+		;
+	}
+
 	m_number_of_elements = 0;
 }
 
@@ -1095,6 +1092,8 @@ template <class T, class Alloc>
 inline typename JVector<T, Alloc>::pointer
 JVector<T, Alloc>::allocate_memory(const size_type size)
 {
+
+
 	return new value_type[size];
 }
 
@@ -1185,7 +1184,7 @@ JVector<T, Alloc>::rmove_range(Iter from, Iter to, pointer dist) noexcept
 }
 
 template<class T, class Alloc>
-inline  typename JVector<T, Alloc>::value_type* 
+inline typename JVector<T, Alloc>::value_type* 
 JVector<T, Alloc>::resize_and_move(size_type new_size, iterator from, iterator to)
 {
 	// TODO unused, consider remove this function

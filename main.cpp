@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <list>
 #include <chrono>
+#include <functional>
+#include <Windows.h>
 
 #include "JVector.h"
 
@@ -52,7 +54,7 @@ public:
 	my_class() = default;
 	my_class(int g) : a(g) {}
 	auto r() { return ++a; }
-	~my_class() { cout << "d me " << i++ << " "; }
+	~my_class() { cout << "delete me " << i++ << " times." << endl; }
 };
 int my_class::i = 0;
 
@@ -60,7 +62,7 @@ template <class T>
 class my_class2
 {
 public:
-	my_class2() = default;
+	my_class2();
 	my_class2(T c, T* d) : a(c), b(d) {}
 
 private:
@@ -76,23 +78,14 @@ int main()
 #endif // WIN32
 	
 	JVector<int> g;
-	vector<my_class> gg;
+	vector<string> gg;
 
-	for (size_t i = 0; i < 100; i++)
-	{
-		g.emplace_back(5);
-		gg.emplace_back(5);
-	}
-	
-	g.clear();
-	gg.clear();
 
-	/*
 	const auto t1 = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < 1000; i++)
+	for (size_t i = 0; i < 10000000; i++)
 	{
-		g.emplace(g.cend(), 1);
-		//gg.emplace(gg.cend(), "haha");
+		g.emplace(g.cend(), 5);
+		//gg.emplace(gg.cend(), "l");
 	}
 	const auto t2 = std::chrono::high_resolution_clock::now();
 
@@ -103,7 +96,6 @@ int main()
 	cout << "This vector took " << fp_ms.count() << " ms, "
 		<< "or " << int_ms.count() << " whole milliseconds "
 		<< "(which is " << int_usec.count() << " whole microseconds)" << endl;
-	*/
 
 	return 0;
 }
