@@ -16,4 +16,8 @@
 #define _CHRONO    ::std::chrono::
 #define _RANGES    ::std::ranges::
 
+// Useful Macro
+#define NODISCARD [[nodiscard]]
+
+
 #endif // !_JSTD_CORE__

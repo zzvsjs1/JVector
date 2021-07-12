@@ -11,6 +11,8 @@
 #ifdef _WIN32
 #ifdef _MSC_VER
 #include <Windows.h>
+# elif (__GNUC__) && (__MINGW32__)
+#include <windows.h>
 #endif // _MSC_VER
 #endif // WIN32
 
@@ -62,7 +64,7 @@ template <class T>
 class my_class2
 {
 public:
-	my_class2();
+	my_class2() = default;
 	my_class2(T c, T* d) : a(c), b(d) {}
 
 private:
@@ -76,16 +78,30 @@ int main()
 	constexpr auto UTF_8 = 65001;
 	SetConsoleOutputCP(UTF_8);
 #endif // WIN32
-	
+
 	JVector<int> g;
-	vector<string> gg;
+	vector<my_class2<int>> gg(10);
+
+	/*
+	for (size_t i = 0; i < 50; i++)
+	{
+		g.emplace_back(5);
+	}
+	*/
+
+	auto a = gg.data();
+
+	g.resize(0);
+
+	a = gg.data();
 
 
+	/*
 	const auto t1 = std::chrono::high_resolution_clock::now();
 	for (size_t i = 0; i < 10000000; i++)
 	{
 		g.emplace(g.cend(), 5);
-		//gg.emplace(gg.cend(), "l");
+		//gg.emplace(gg.cend(), 5);
 	}
 	const auto t2 = std::chrono::high_resolution_clock::now();
 
@@ -96,6 +112,7 @@ int main()
 	cout << "This vector took " << fp_ms.count() << " ms, "
 		<< "or " << int_ms.count() << " whole milliseconds "
 		<< "(which is " << int_usec.count() << " whole microseconds)" << endl;
-
+	*/
+	
 	return 0;
 }
