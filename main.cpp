@@ -5,8 +5,10 @@
 #include <chrono>
 #include <functional>
 #include <Windows.h>
+#include <memory>
 
 #include "JVector.h"
+#include "ve.h"
 
 #ifdef _WIN32
 #ifdef _MSC_VER
@@ -79,8 +81,11 @@ int main()
 	SetConsoleOutputCP(UTF_8);
 #endif // WIN32
 
-	JVector<int> g;
-	vector<my_class2<int>> gg(10);
+	JVector<int> g(5);
+	//vector<JVector<string>> gg(10, JVector<string>(10, "ahah"));
+	//vector<int> a;
+
+	vec<string> gg(100, "H");
 
 	/*
 	for (size_t i = 0; i < 50; i++)
@@ -89,11 +94,8 @@ int main()
 	}
 	*/
 
-	auto a = gg.data();
-
-	g.resize(0);
-
-	a = gg.data();
+	//auto a = g.data();
+	//a = g.data();
 
 
 	/*
