@@ -1,14 +1,11 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <list>
 #include <chrono>
-#include <functional>
 #include <Windows.h>
 #include <memory>
 
 #include "JVector.h"
-#include "ve.h"
 
 #ifdef _WIN32
 #ifdef _MSC_VER
@@ -81,22 +78,11 @@ int main()
 	SetConsoleOutputCP(UTF_8);
 #endif // WIN32
 
-	JVector<int> g(5);
-	//vector<JVector<string>> gg(10, JVector<string>(10, "ahah"));
-	//vector<int> a;
+	JVector<int> k(10);
 
-	vec<string> gg(100, "H");
+	k = { 1, 2, 3, 4, 5 , 6, 7, 8, 9, 10 , 11};
 
-	/*
-	for (size_t i = 0; i < 50; i++)
-	{
-		g.emplace_back(5);
-	}
-	*/
-
-	//auto a = g.data();
-	//a = g.data();
-
+	print_arr(k);
 
 	/*
 	const auto t1 = std::chrono::high_resolution_clock::now();

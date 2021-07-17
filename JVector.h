@@ -2,12 +2,12 @@
 #ifndef _JVECTOR_
 #define _JVECTOR_
 
-#include <cassert>
 #include <iterator>
 #include <memory>
 #include <initializer_list>
 #include <limits>
 #include <exception>
+#include <stdexcept>
 
 #include "jstd_core.h"
 
@@ -230,7 +230,7 @@ NODISCARD JVector_Iterator<MyVector> operator+(
 }
 
 // JVector is a class that provides mutable arrays. The allocator is not used.
-template<class T, class Alloc = _STD allocator<T>>
+template <class T, class Alloc = _STD allocator<T>>
 class JVector
 {
 private:
@@ -240,9 +240,7 @@ private:
 public:
 	using value_type             = T;
 	using allocator_type         = Alloc;
-	//using pointer                = typename alty_traits::pointer;
 	using pointer                = T*;
-	//using const_pointer          = typename alty_traits::const_pointer;
 	using const_pointer          = const T*;
 	using reference              = value_type&;
 	using const_reference        = const value_type&;
@@ -278,9 +276,6 @@ private:
 	void range_construct(Iter from, Iter to);
 
 public:
-	template <class InputIt>
-	JVector(InputIt first, InputIt last);
-
 	JVector(_STD initializer_list<T> init);
 
 	JVector(const JVector &other);
@@ -292,14 +287,9 @@ public:
 private:
 	template <class Iter>
 	void destroy_range(Iter first, Iter last);
-
+	
 public:
 	void assign(size_type count, const T &value);
-
-	template <class InputIt>
-	void assign(InputIt first, InputIt last);
-
-	void assign(_STD initializer_list<T> ilist);
 
 	JVector& operator=(const JVector &other);
 
@@ -331,9 +321,9 @@ public:
 
 	NODISCARD const_reference back() const noexcept;
 
-	NODISCARD value_type* data() noexcept;
+	NODISCARD pointer data() noexcept;
 
-	NODISCARD const value_type* data() const noexcept;
+	NODISCARD const pointer data() const noexcept;
 	
 	NODISCARD iterator begin() noexcept;
 
@@ -368,6 +358,8 @@ public:
 private:
 	void change_vector_capacity_to(const size_type new_capacity);
 
+	void change_vector(pointer new_vector, size_type new_size, size_type new_capacity);
+
 public:
 	void reserve(const size_type new_cap);
 
@@ -387,18 +379,10 @@ private:
 	pointer move_range(pointer first, pointer last, pointer dest);
 
 	template <class Iter>
-	void insert_range(const_iterator pos, Iter first, Iter last);
-
-	template <class Iter>
 	void rmove(Iter first, Iter last, pointer dest);
 
 public:
 	iterator insert(const_iterator pos, size_type count, const T &value);
-
-	template <class InputIt>
-	iterator insert(const_iterator pos, InputIt first, InputIt last);
-
-	iterator insert(const_iterator pos, _STD initializer_list<T> ilist);
 
 private:
 	template <class... Args>
@@ -429,7 +413,6 @@ public:
 	void resize(size_type count, const value_type &value);
 
 	void swap(JVector &other) noexcept;
-	
 };
 
 template <class T, class Alloc>
@@ -438,9 +421,7 @@ JVector<T, Alloc>::JVector() noexcept(_STD is_nothrow_default_constructible_v<al
 	: m_size(), 
 	  m_capacity(), 
 	  m_data()
-{
-
-}
+	{}
 
 template <class T, class Alloc>
 template <class Iter, class DestT>
@@ -480,20 +461,25 @@ JVector<T, Alloc>::JVector(size_type count)
 
 template <class T, class Alloc>
 inline 
-JVector<T, Alloc>::JVector(size_type count, const T& value)
+JVector<T, Alloc>::JVector(size_type count, const T &value)
 	: m_size(count),
 	m_capacity(count),
 	m_data()
 {
 	if (count != 0)
 	{
+		if (count > max_size())
+		{
+			throw _STD runtime_error("Vector too long.");
+		}
+
 		auto vector = new value_type[count]{};
 
 		try
 		{
 			assign_copy_range(vector, vector + count, value);
 		}
-		catch (const std::exception&)
+		catch (...)
 		{
 			delete[] vector;
 			throw;
@@ -507,21 +493,31 @@ template <class T, class Alloc>
 template <class Iter>
 inline void JVector<T, Alloc>::range_construct(Iter from, Iter to)
 {
-	for (; from != to; ++from)
+	const auto size = static_cast<size_type>(_STD distance(from, to));
+	if (size > max_size())
 	{
-		emplace_back(*from);
+		throw _STD runtime_error("Vector too long");
 	}
-}
 
-template <class T, class Alloc>
-template <class InputIt>
-inline 
-JSTD::JVector<T, Alloc>::JVector(InputIt first, InputIt last)
-	: m_size(),
-	m_capacity(),
-	m_data()
-{
-	range_construct(first, last);
+	if (size != 0)
+	{
+		auto new_vector = new value_type[size]{};
+		
+		try
+		{
+			for (auto vector_start = new_vector; from != to; ++from, ++vector_start)
+			{
+				*vector_start = *from;
+			}
+		}
+		catch (...)
+		{
+			delete[] new_vector;
+			throw;
+		}
+
+		change_vector(new_vector, size, size);
+	}
 }
 
 template <class T, class Alloc>
@@ -533,7 +529,7 @@ inline JVector<T, Alloc>::JVector(::std::initializer_list<T> init)
 	range_construct(init.begin(), init.end());
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline 
 JVector<T, Alloc>::JVector(const JVector &other)
 	: m_size(other.m_size),
@@ -542,7 +538,7 @@ JVector<T, Alloc>::JVector(const JVector &other)
 {
 	if (other.m_size != 0)
 	{
-		auto vector = new value_type[other.m_size];
+		auto vector = new value_type[other.m_size]{};
 		
 		try
 		{
@@ -558,7 +554,7 @@ JVector<T, Alloc>::JVector(const JVector &other)
 	}
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline 
 JVector<T, Alloc>::JVector(JVector &&other) noexcept
 	: m_size(),
@@ -580,12 +576,12 @@ template <class Iter>
 inline void 
 JVector<T, Alloc>::destroy_range(Iter first, Iter last)
 {
-	if constexpr (!std::is_trivially_destructible_v<typename std::iterator_traits<Iter>::value_type>)
+	if constexpr (
+		!_STD is_trivially_destructible_v<typename std::iterator_traits<Iter>::value_type>)
 	{
 		for (; first != last; ++first)
 		{
 			first->~value_type();
-			::new (&(*first)) value_type();
 		}
 	}
 }
@@ -594,13 +590,20 @@ template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::assign(size_type count, const T &value)
 {
+	// Greater than size
 	if (count > m_size)
 	{
+		// If we have enough memory.
 		if (count <= m_capacity)
 		{
-			assign_copy_range(m_data, m_data + count, value);
+			const auto end_of_count = m_data + count;
+
+			// If throw an exception in assign_copy_range(), size will not be changed.
+			assign_copy_range(m_data, end_of_count, value);
+			destroy_range(end_of_count, m_data + m_size);
 			m_size = count;
 		}
+		// Reallocate
 		else
 		{
 			auto new_vector = new value_type[count]{};
@@ -608,18 +611,16 @@ JVector<T, Alloc>::assign(size_type count, const T &value)
 			{
 				assign_copy_range(new_vector, new_vector + count, value);
 			}
-			catch (const std::exception &)
+			catch (...)
 			{
 				delete[] new_vector;
 				throw;
 			}
 			
-			delete[] m_data;
-			m_data = new_vector;
-			m_size = count;
-			m_capacity = count;
+			change_vector(new_vector, count, count);
 		}
 	}
+	// No capacity modification, only trim.
 	else
 	{
 		assign_copy_range(m_data, m_data + count, value);
@@ -629,56 +630,44 @@ JVector<T, Alloc>::assign(size_type count, const T &value)
 }
 
 template <class T, class Alloc>
-template <class InputIt>
-inline void 
-JVector<T, Alloc>::assign(InputIt first, InputIt last)
-{
-	pointer start = m_data;
-	pointer end = m_data + m_size;
-	for (; start != end && first != last; ++start, ++first)
-	{
-		*start = *first;
-	}
-
-	destroy_range(start, end);
-	m_size = start - m_data;
-
-	for (; first != last; ++first)
-	{
-		emplace_back(*first);
-	}
-}
-
-template<class T, class Alloc>
-inline void 
-JSTD::JVector<T, Alloc>::assign(_STD initializer_list<T> ilist)
-{
-	assign(ilist.begin(), ilist.end());
-}
-
-template<class T, class Alloc>
 inline JVector<T, Alloc>&
 JVector<T, Alloc>::operator=(const JVector &other)
 {
 	if (this != _STD addressof(other))
 	{
-		assign(other.cbegin(), other.cend());
+		pointer start           = m_data;
+		const pointer end       = m_data + m_size;
+		pointer other_start     = other.m_data;
+		const pointer other_end = other.m_data + other.m_size;
+
+		for (; start != end && other_start != other_end; ++start, ++other_start)
+		{
+			*start = *other_start;
+		}
+
+		destroy_range(start, end);
+		m_size = start - m_data;
+
+		for (; other_start != other_end; ++other_start)
+		{
+			emplace_back(*other_start);
+		}
 	}
 
 	return *this;
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::destroy_all_members() noexcept
 {
 	delete[] m_data;
-	m_data = nullptr;
+	m_data     = nullptr;
 	m_capacity = 0;
-	m_size = 0;
+	m_size     = 0;
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline JVector<T, Alloc>&
 JVector<T, Alloc>::operator=(JVector &&other) noexcept
 {
@@ -691,11 +680,62 @@ JVector<T, Alloc>::operator=(JVector &&other) noexcept
 	return *this;
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline JVector<T, Alloc>&
-JVector<T, Alloc>::operator=(::std::initializer_list<T> ilist)
+JVector<T, Alloc>::operator=(_STD initializer_list<T> ilist)
 {	
-	assign(ilist.begin(), ilist.end());
+	if (ilist.size() != 0)
+	{
+		if (ilist.size() > m_capacity)
+		{
+			if (ilist.size() > max_size())
+			{
+				throw _STD runtime_error("Vector too long");
+			}
+
+			destroy_all_members();
+			range_construct(ilist.begin(), ilist.end());
+		}
+		else
+		{
+			if (ilist.size() > m_size)
+			{
+				pointer start          = m_data;
+				pointer end            = m_data + m_size;
+
+				auto ilist_start       = ilist.begin();
+				const auto ilist_end   = ilist.end();
+
+				for (; start != end; ++start)
+				{
+					*start = *ilist_start;
+				}
+
+				for (const pointer list_length_end = m_data + ilist.size(); 
+					start != list_length_end; 
+					++start, ++ilist_start)
+				{
+					::new (static_cast<void*>(start)) value_type(*ilist_start);
+					++m_size;
+				}
+			}
+			else
+			{
+				pointer start = m_data;
+				pointer end   = m_data + m_size;
+
+				for (auto &obj : ilist)
+				{
+					*start = obj;
+					++start;
+				}
+
+				destroy_range(start, end);
+				m_size = ilist.size();
+			}
+		}
+	}
+
 	return *this;
 }
 
@@ -733,7 +773,7 @@ JVector<T, Alloc>::operator[](const size_type pos)
 	return m_data[pos];
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::const_reference 
 JSTD::JVector<T, Alloc>::operator[](const size_type pos) const
 {
@@ -741,7 +781,7 @@ JSTD::JVector<T, Alloc>::operator[](const size_type pos) const
 	return m_data[pos];
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::reference 
 JVector<T, Alloc>::front() noexcept
 {
@@ -749,7 +789,7 @@ JVector<T, Alloc>::front() noexcept
 	return *m_data;
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::reference 
 JVector<T, Alloc>::front() const noexcept
 {
@@ -757,7 +797,7 @@ JVector<T, Alloc>::front() const noexcept
 	return *m_data;
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::reference 
 JVector<T, Alloc>::back() noexcept
 {
@@ -765,7 +805,7 @@ JVector<T, Alloc>::back() noexcept
 	return m_data[m_size - 1];
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::const_reference 
 JVector<T, Alloc>::back() const noexcept
 {
@@ -773,138 +813,146 @@ JVector<T, Alloc>::back() const noexcept
 	return m_data[m_size - 1];
 }
 
-template<class T, class Alloc>
-inline typename JVector<T, Alloc>::value_type *JVector<T, Alloc>::data() noexcept
+template <class T, class Alloc>
+inline typename JVector<T, Alloc>::pointer
+JVector<T, Alloc>::data() noexcept
 {
-	// Maybe null.
 	return m_data;
 }
 
-template<class T, class Alloc>
-inline const typename JVector<T, Alloc>::value_type*
+template <class T, class Alloc>
+inline const typename JVector<T, Alloc>::pointer
 JVector<T, Alloc>::data() const noexcept
 {
 	return m_data;
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::iterator 
 JVector<T, Alloc>::begin() noexcept
 {
 	return iterator(m_data);
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::const_iterator 
 JVector<T, Alloc>::begin() const noexcept
 {
 	return const_iterator(m_data);
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::iterator 
 JVector<T, Alloc>::end() noexcept
 {
 	return iterator(m_data + m_size);
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::const_iterator 
 JVector<T, Alloc>::end() const noexcept
 {
 	return const_iterator(m_data + m_size);
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::reverse_iterator 
 JVector<T, Alloc>::rbegin() noexcept
 {
 	return reverse_iterator(end());
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::const_reverse_iterator 
 JVector<T, Alloc>::rbegin() const noexcept
 {
 	return const_reverse_iterator(end());
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::reverse_iterator 
 JVector<T, Alloc>::rend() noexcept
 {
 	return reverse_iterator(begin());
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::reverse_iterator 
 JVector<T, Alloc>::rend() const noexcept
 {
 	return const_reverse_iterator(begin());
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::const_iterator 
 JVector<T, Alloc>::cbegin() const noexcept
 {
 	return begin();
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::const_iterator 
 JVector<T, Alloc>::cend() const noexcept
 {
 	return end();
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::const_reverse_iterator 
 JVector<T, Alloc>::crbegin() const noexcept
 {
 	return rbegin();
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::const_reverse_iterator 
 JVector<T, Alloc>::crend() const noexcept
 {
 	return rend();
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline bool JVector<T, Alloc>::empty() const noexcept
 {
 	return m_size == 0;
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::size_type 
 JVector<T, Alloc>::size() const noexcept
 {
 	return m_size;
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::size_type 
 JVector<T, Alloc>::max_size() const noexcept
 {
+	// Copy from MSVC STL.
 	return (_STD min)(
 		static_cast<size_type>((_STD numeric_limits<difference_type>::max)()), static_cast<size_type>(-1) / sizeof(value_type));
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::change_vector_capacity_to(const size_type new_capacity)
 {
-	auto new_vector = new value_type[new_capacity];
-	more_range(m_data, m_data + m_size, new_vector);
+	auto new_vector = new value_type[new_capacity]{};
+	move_range(m_data, m_data + m_size, new_vector);
+	change_vector(new_vector, m_size, new_capacity);
+}
 
+template <class T, class Alloc>
+inline void 
+JVector<T, Alloc>::change_vector(pointer new_vector, size_type new_size, size_type new_capacity)
+{
 	delete[] m_data;
-	m_data = new_vector;
+	m_data     = new_vector;
+	m_size     = new_size;
 	m_capacity = new_capacity;
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::reserve(const size_type new_cap)
 {
@@ -921,14 +969,14 @@ JVector<T, Alloc>::reserve(const size_type new_cap)
 	}
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::size_type 
 JVector<T, Alloc>::capacity() const noexcept
 {
 	return m_capacity;
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::shrink_to_fit()
 {
@@ -947,7 +995,7 @@ JVector<T, Alloc>::shrink_to_fit()
 	}
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::clear() noexcept
 {
@@ -955,24 +1003,25 @@ JVector<T, Alloc>::clear() noexcept
 	m_size = 0;
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::iterator 
 JVector<T, Alloc>::insert(const_iterator pos, const T &value)
 {
 	return emplace(pos, value);
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::iterator 
 JVector<T, Alloc>::insert(const_iterator pos, T &&value)
 {
 	return emplace(pos, _STD move(value));
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::size_type 
 JVector<T, Alloc>::calculate_growth(size_type new_size)
 {
+	// Copy from MSVC STL.
 	const auto max = max_size();
 
 	if (m_capacity > max - m_capacity / 2) 
@@ -990,7 +1039,7 @@ JVector<T, Alloc>::calculate_growth(size_type new_size)
 	return geometric;
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::pointer
 JVector<T, Alloc>::move_range(pointer first, pointer last, pointer dest)
 {
@@ -1002,21 +1051,8 @@ JVector<T, Alloc>::move_range(pointer first, pointer last, pointer dest)
 	return dest;
 }
 
-template<class T, class Alloc>
-template<class Iter>
-inline void 
-JVector<T, Alloc>::insert_range(const_iterator pos, Iter first, Iter last)
-{
-	if (first == last)
-	{
-		return;
-	}
-
-
-}
-
-template<class T, class Alloc>
-template<class Iter>
+template <class T, class Alloc>
+template <class Iter>
 inline void 
 JVector<T, Alloc>::rmove(Iter first, Iter last, pointer dest)
 {
@@ -1026,21 +1062,24 @@ JVector<T, Alloc>::rmove(Iter first, Iter last, pointer dest)
 	}
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::iterator 
 JVector<T, Alloc>::insert(const_iterator pos, size_type count, const T &value)
 {
 	pointer add_pos_ptr = pos.ptr;
 
+	// If count == 0, skip.
 	if (count == 0)
 	{
 		return iterator(pos.ptr);
 	}
+	// If just add one to back, using emplace_back_with_unused_capacity.
 	else if (pos.ptr == m_data + m_size && count == 1)
 	{
 		emplace_back_with_unused_capacity(value);
-		return iterator(pos.ptr);
+		return iterator(add_pos_ptr);
 	}
+	// If no enough space to store the value.
 	else if (count > m_capacity - m_size)
 	{
 		if (count > max_size() - m_size)
@@ -1048,14 +1087,16 @@ JVector<T, Alloc>::insert(const_iterator pos, size_type count, const T &value)
 			throw _STD runtime_error("Vector too long.");
 		}
 
-		const size_type insert_pos = pos.ptr - m_data;
-		const size_type new_size = m_size + count;
-		const size_type new_capacity = calculate_growth(new_size);
-		auto new_vector    = new value_type[new_capacity];
+		// Provide store guarantee.
+		const pointer start                = m_data;
+		const size_type insert_pos_index   = pos.ptr - start;
+		const size_type new_size           = m_size + count;
+		const size_type new_capacity       = calculate_growth(new_size);
+		auto new_vector                    = new value_type[new_capacity]{};
 
 		try
 		{
-			assign_copy_range(new_vector + insert_pos, new_vector + insert_pos + count, value);
+			assign_copy_range(new_vector + insert_pos_index, new_vector + insert_pos_index + count, value);
 		}
 		catch (...)
 		{
@@ -1064,41 +1105,24 @@ JVector<T, Alloc>::insert(const_iterator pos, size_type count, const T &value)
 		}
 
 		move_range(m_data, add_pos_ptr, new_vector);
-		move_range(add_pos_ptr, m_data + m_size, new_vector + insert_pos + count);
+		move_range(add_pos_ptr, m_data + m_size, new_vector + insert_pos_index + count);
+		change_vector(new_vector, new_size, new_capacity);
 
-		delete[] m_data;
-		m_data = new_vector;
-		m_capacity = new_capacity;
-		m_size = new_size;
-		return iterator(new_vector + insert_pos);
+		return iterator(new_vector + insert_pos_index);
 	}
-
-	const size_type insert_pos = pos.ptr - m_data;
-	
-	auto temp_vector = new value_type[count]{};
-	
-	try
+	// If we have enough space to store the elementes.
+	else
 	{
-		assign_copy_range(temp_vector, temp_vector + count, value);
-	}
-	catch (...)
-	{
-		delete[] temp_vector;
-		throw;
-	}
-	
-	rmove(add_pos_ptr - 1, m_data + m_size - 1, m_data + m_size + count);
-	move_range(temp_vector, temp_vector + count, add_pos_ptr);
-	m_size += count;
-	delete[] temp_vector;
-	return iterator(pos.ptr);
-}
+		const auto old_size = m_size;
 
-template <class T, class Alloc>
-inline typename JVector<T, Alloc>::iterator
-JVector<T, Alloc>::insert(const_iterator pos, _STD initializer_list<T> ilist)
-{
-	insert(pos, ilist.begin(), ilist.end());
+		for (size_t i = 0; i < count; i++)
+		{
+			emplace_back_with_unused_capacity(value);
+		}
+
+		_STD rotate(pos.ptr, m_data + old_size, m_data + m_size);
+		return iterator(pos.ptr);
+	}
 }
 
 template <class T, class Alloc>
@@ -1111,15 +1135,14 @@ JVector<T, Alloc>::emplace_rellocate(const pointer pos, Args&&... args)
 		throw _STD runtime_error("Vector too long.");
 	}
 
-	const auto new_size = m_size + 1;
-	const auto new_capacity = calculate_growth(new_size);
-	const auto add_pos = pos - m_data;
+	const auto new_size      = m_size + 1;
+	const auto new_capacity  = calculate_growth(new_size);
+	const auto add_pos_index = pos - m_data;
 
-	auto new_vector = new value_type[new_capacity];
-
+	auto new_vector = new value_type[new_capacity]{};
 	try
 	{
-		new_vector[add_pos] = _STD move(value_type(_STD forward<Args>(args)...));
+		::new (static_cast<void*>(&new_vector[add_pos_index])) value_type(_STD forward<Args>(args)...);
 	}
 	catch (...)
 	{
@@ -1128,20 +1151,18 @@ JVector<T, Alloc>::emplace_rellocate(const pointer pos, Args&&... args)
 	}
 
 	move_range(m_data, pos, new_vector);
-	move_range(pos, m_data + m_size, new_vector + add_pos + 1);
-	delete[] m_data;
-	m_data = new_vector;
-	m_size = new_size;
-	m_capacity = new_capacity;
-	return new_vector + add_pos;
+	move_range(pos, m_data + m_size, new_vector + add_pos_index);
+	change_vector(new_vector, new_size, new_capacity);
+
+	return new_vector + add_pos_index;
 }
 
 template <class T, class Alloc>
 template <class ...Args>
 inline decltype(auto) 
-JVector<T, Alloc>::emplace_back_with_unused_capacity(Args && ...args)
+JVector<T, Alloc>::emplace_back_with_unused_capacity(Args&&... args)
 {
-	m_data[m_size - 1] = value_type(_STD forward<Args>(args)...);
+	::new (static_cast<void*>(&m_data[m_size])) value_type(_STD forward<Args>(args)...);
 	++m_size;
 	return m_data[m_size - 1];
 }
@@ -1149,16 +1170,33 @@ JVector<T, Alloc>::emplace_back_with_unused_capacity(Args && ...args)
 template <class T, class Alloc>
 template <class ...Args>
 inline typename JVector<T, Alloc>::iterator 
-JVector<T, Alloc>::emplace(const_iterator pos, Args && ...args)
+JVector<T, Alloc>::emplace(const_iterator pos, Args&&... args)
 {
+	const pointer pos_ptr = pos.ptr;
 
+	if (m_size != m_capacity)
+	{
+		if (pos.ptr == m_data + m_size)
+		{
+			emplace_back_with_unused_capacity(_STD forward<Args>(args)...);
+			return iterator(pos_ptr);
+		}
+		else
+		{
+			value_type new_obj        = value_type(_STD forward<Args>(args)...);
+			const pointer rmove_start = pos_ptr - 1;
+			const pointer rmove_end   = m_data + m_size - 1;
+			const pointer rmove_dest  = m_data + m_size;
 
+			rmove(rmove_start, rmove_end, rmove_dest);
+			*pos_ptr = _STD move(new_obj);
+			++m_size;
 
+			return iterator(pos_ptr);
+		}
+	}
 
-
-
-
-	return iterator();
+	return iterator(emplace_rellocate(pos_ptr, _STD forward<Args>(args)...));
 }
 
 template <class T, class Alloc>
@@ -1171,55 +1209,55 @@ JVector<T, Alloc>::emplace_back(Args&& ...args)
 		return emplace_back_with_unused_capacity(_STD forward<Args>(args)...);
 	}
 	
-	pointer a = m_data + m_size;
-	return *emplace_rellocate(a, _STD forward<Args>(args)...);
+	return *emplace_rellocate(m_data + m_size, _STD forward<Args>(args)...);
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::iterator 
-JVector<T, Alloc>::erase(const_iterator pos) noexcept(::std::is_nothrow_move_assignable_v<value_type>)
+JVector<T, Alloc>::erase(const_iterator pos) noexcept(_STD is_nothrow_move_assignable_v<value_type>)
 {
 	const pointer where_ptr = pos.ptr;
 	move_range(where_ptr + 1, m_data + m_size, where_ptr);
-	m_data[m_size - 1] = value_type();
+
+	m_data[m_size - 1].~value_type();
 	--m_size;
+
 	return iterator(where_ptr);
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline typename JVector<T, Alloc>::iterator 
-JVector<T, Alloc>::erase(const_iterator first, const_iterator last) noexcept(::std::is_nothrow_move_assignable_v<value_type>)
+JVector<T, Alloc>::erase(const_iterator first, const_iterator last) noexcept(_STD is_nothrow_move_assignable_v<value_type>)
 {
-	const pointer first_ptr = first.ptr;
-	const pointer last_ptr = last.ptr;
-	
-	if (first_ptr != last_ptr)
+	if (first != last)
 	{
+		const pointer first_ptr      = first.ptr;
+		const pointer last_ptr       = last.ptr;
+		const size_type num_of_earse = last_ptr - first_ptr;
 		const auto need_to_destroy = move_range(last_ptr, m_data + m_size, first_ptr);
+		
 		destroy_range(need_to_destroy, m_data + m_size);
-
-		const auto num_of_earse = last_ptr - first_ptr;
 		m_size -= num_of_earse;
 	}
 
-	return iterator(first_ptr);
+	return iterator(first.ptr);
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::push_back(const T &value)
 {
 	emplace_back(value);
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::push_back(T &&value)
 {
 	emplace_back(_STD move(value));
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::pop_back() noexcept
 {
@@ -1227,57 +1265,58 @@ JVector<T, Alloc>::pop_back() noexcept
 	--m_size;
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::resize(size_type count)
 {
 	resize(count, value_type());
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::resize(size_type count, const value_type &value)
 {
-	if (count > m_capacity)
+	if (count < m_size)
 	{
-		if (count > max_size())
-		{
-			throw _STD runtime_error("Vector too long");
-		}
-
-		const pointer new_vector = new value_type[count]{};
-
-		try
-		{
-			assign_copy_range(new_vector + m_size, new_vector + count, value);
-		}
-		catch (...)
-		{
-			delete[] new_vector;
-			throw;
-		}
-
-		move_range(m_data, m_data + m_size, new_vector);
-		delete[] m_data;
-		m_data = new_vector;
-		m_capacity = count;
-	}
-	else if (count == 0)
-	{
-		destroy_all_members();
-	}
-	else if (count < m_capacity)
-	{
-		const pointer new_vector = new value_type[count]{};
-		move_range(m_data, m_data + count, new_vector);
-		delete[] m_data;
-		m_data = new_vector;
+		destroy_range(m_data + count, m_data + m_size);
 		m_size = count;
-		m_capacity = count;
+	}
+	else if (count > m_size)
+	{
+		// Reallocate
+		if (count > m_capacity)
+		{
+			if (count > max_size())
+			{
+				throw _STD runtime_error("Vector too long");
+			}
+
+			pointer new_vector = new value_type[count]{};
+
+			try
+			{
+				assign_copy_range(new_vector + m_size, new_vector + count, value);
+			}
+			catch (...)
+			{
+				delete[] new_vector;
+				throw;
+			}
+
+			move_range(m_data, m_data + m_size, new_vector);
+			change_vector(new_vector, count, count);
+		}
+		else
+		{
+			for (size_type i = 0, need_to_append = count - m_size; i < need_to_append; ++i)
+			{
+				emplace_back_with_unused_capacity(value);
+			}
+		}
 	}
 }
 
-template<class T, class Alloc>
+template <class T, class Alloc>
 inline void 
 JVector<T, Alloc>::swap(JVector &other) noexcept
 {

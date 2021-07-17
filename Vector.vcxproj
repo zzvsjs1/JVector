@@ -152,8 +152,6 @@
   <ItemGroup>
     <ClInclude Include="jstd_core.h" />
     <ClInclude Include="JVector.h" />
-    <ClInclude Include="ve.h" />
-    <ClInclude Include="Vector.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
