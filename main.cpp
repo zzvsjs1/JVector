@@ -15,7 +15,6 @@
 #endif // _MSC_VER
 #endif // WIN32
 
-using namespace JSTD;
 using std::vector;
 using std::cin;
 using std::cout;
@@ -71,6 +70,8 @@ private:
 	T* b;
 };
 
+
+
 int main()
 {
 #ifdef _WIN32
@@ -78,29 +79,8 @@ int main()
 	SetConsoleOutputCP(UTF_8);
 #endif // WIN32
 
-	JVector<int> k(10);
-
-	k = { 1, 2, 3, 4, 5 , 6, 7, 8, 9, 10 , 11};
-
-	print_arr(k);
-
-	/*
-	const auto t1 = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < 10000000; i++)
-	{
-		g.emplace(g.cend(), 5);
-		//gg.emplace(gg.cend(), 5);
-	}
-	const auto t2 = std::chrono::high_resolution_clock::now();
-
-	std::chrono::duration<double, std::milli> fp_ms = t2 - t1;
-	const auto int_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-	const std::chrono::duration<long, std::micro> int_usec = int_ms;
-
-	cout << "This vector took " << fp_ms.count() << " ms, "
-		<< "or " << int_ms.count() << " whole milliseconds "
-		<< "(which is " << int_usec.count() << " whole microseconds)" << endl;
-	*/
+	JVector<int> g;
+	
 	
 	return 0;
 }

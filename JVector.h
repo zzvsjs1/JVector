@@ -8,10 +8,15 @@
 #include <limits>
 #include <exception>
 #include <stdexcept>
+#include <cassert>
 
-#include "jstd_core.h"
+// NAMESPACE
+#define _JSTD_BEGIN namespace JSTD {
+#define _JSTD_END   }
+#define _STD       ::std::
 
-_JSTD_BEGIN
+// Useful Macro
+#define NODISCARD [[nodiscard]]
 
 // JVector const iterator.
 template <class MyVector>
@@ -428,7 +433,7 @@ template <class Iter, class DestT>
 inline 
 void JVector<T, Alloc>::copy_range(Iter from, Iter to, DestT dest)
 {
-	for(; from != to; ++from, ++dest)
+	for (; from != to; ++from, ++dest)
 	{
 		*dest = *from;
 	}
@@ -704,7 +709,6 @@ JVector<T, Alloc>::operator=(_STD initializer_list<T> ilist)
 				pointer end            = m_data + m_size;
 
 				auto ilist_start       = ilist.begin();
-				const auto ilist_end   = ilist.end();
 
 				for (; start != end; ++start)
 				{
@@ -775,7 +779,7 @@ JVector<T, Alloc>::operator[](const size_type pos)
 
 template <class T, class Alloc>
 inline typename JVector<T, Alloc>::const_reference 
-JSTD::JVector<T, Alloc>::operator[](const size_type pos) const
+JVector<T, Alloc>::operator[](const size_type pos) const
 {
 	assert(pos < m_size);
 	return m_data[pos];
@@ -1218,9 +1222,7 @@ JVector<T, Alloc>::erase(const_iterator pos) noexcept(_STD is_nothrow_move_assig
 {
 	const pointer where_ptr = pos.ptr;
 	move_range(where_ptr + 1, m_data + m_size, where_ptr);
-
-	m_data[m_size - 1].~value_type();
-	--m_size;
+	destroy_range(m_data + m_size - 1, m_data + m_size);
 
 	return iterator(where_ptr);
 }
@@ -1378,6 +1380,4 @@ swap(const JVector<T, Alloc> &left, const JVector<T, Alloc> &right) noexcept
 {
 	left.swap(right);
 }
-
-_JSTD_END
 #endif // !_JVECTOR_
